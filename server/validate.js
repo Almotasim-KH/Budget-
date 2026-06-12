@@ -16,8 +16,8 @@ function validateCredentials(body) {
       error: "Username must be 3–32 characters: letters, numbers, or underscore."
     };
   }
-  if (password.length < 8) {
-    return { ok: false, error: "Password must be at least 8 characters." };
+  if (password.length < 4) {
+    return { ok: false, error: "Password must be at least 4 characters." };
   }
   if (password.length > 200) {
     return { ok: false, error: "Password is too long." };
