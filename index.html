@@ -196,6 +196,8 @@ input[type=color].input{padding:4px;height:42px}
 .scroll-x{overflow-x:auto}
 .section-title{font-size:16px;font-weight:700;margin:4px 0 14px}
 .hide{display:none !important}
+.app-credit{font-size:11.5px;color:var(--text-faint);text-align:center;letter-spacing:.02em}
+.app-credit-foot{display:none;padding:18px 0 10px;margin-top:8px}
 
 /* ===================== DASHBOARD FX ===================== */
 .hero{position:relative;overflow:hidden;border-radius:18px;padding:24px 28px 32px;margin-bottom:22px;
@@ -280,6 +282,16 @@ img,svg,canvas{max-width:100%}
   .modal-foot .btn{flex:1;justify-content:center}
   .stat-value{font-size:22px}
   .hero-title{font-size:20px}
+  /* transactions: stack each row into a 2-line grid so category/amount and
+     date/actions stop colliding on narrow screens (works LTR + RTL). */
+  .tx-row{display:grid;grid-template-columns:auto 1fr auto;
+    grid-template-areas:"dot main amt" "dot date act";gap:2px 10px;align-items:center;padding:11px 4px}
+  .tx-row .dot{grid-area:dot;align-self:center}
+  .tx-row .tx-main{grid-area:main;min-width:0}
+  .tx-row .tx-amt{grid-area:amt;justify-self:end}
+  .tx-row .tx-date{grid-area:date;justify-self:start}
+  .tx-row .row-actions{grid-area:act;justify-self:end;opacity:1}
+  .app-credit-foot{display:block}
 }
 @media(max-width:430px){
   body{font-size:14.5px}
@@ -383,8 +395,8 @@ img,svg,canvas{max-width:100%}
       <div class="who" id="who" title="Logged in user"></div>
       <button class="btn btn-sm btn-ghost" data-action="lang" id="lang-btn-side">العربية</button>
       <button class="btn btn-sm btn-ghost" data-action="theme"><span id="theme-icon"></span><span id="theme-label">Theme</span></button>
-      <button class="btn btn-sm btn-ghost" data-action="data-menu" id="data-btn-side">Backup &amp; Data</button>
       <button class="btn btn-sm btn-ghost" data-action="logout" id="logout-btn">Log out</button>
+      <div class="app-credit">© AlmotasimKH</div>
     </div>
   </aside>
   <div class="content">
@@ -392,9 +404,9 @@ img,svg,canvas{max-width:100%}
       <h1 id="page-title">Dashboard</h1>
       <button class="btn btn-sm" data-action="lang" id="lang-btn-top" title="Language">العربية</button>
       <button class="icon-btn" data-action="theme" title="Toggle theme" id="theme-icon-top"></button>
-      <button class="btn btn-sm" data-action="data-menu" id="data-btn-top">Data</button>
     </div>
     <main id="view"></main>
+    <footer class="app-credit app-credit-foot">© AlmotasimKH</footer>
   </div>
 </div>
 <div id="modal-root"></div>
@@ -554,7 +566,7 @@ const STR = {
   }
 };
 let currentUser = "";
-function curLang(){ return (state && state.settings && state.settings.lang) || "en"; }
+function curLang(){ return (state && state.settings && state.settings.lang) || "ar"; }
 function isRTL(){ return curLang() === "ar"; }
 function t(k, p){
   const L = curLang();
@@ -574,8 +586,6 @@ function applyStaticLang(){
   document.querySelectorAll(".brand-name").forEach(e=>e.textContent=t("brand_name"));
   document.querySelectorAll(".brand-sub").forEach(e=>e.textContent=t("brand_sub"));
   ["lang-btn-top","lang-btn-side","lang-btn-auth"].forEach(id=>{const e=document.getElementById(id); if(e) e.textContent=langBtnLabel();});
-  const dt=document.getElementById("data-btn-top"); if(dt) dt.textContent=t("data");
-  const ds=document.getElementById("data-btn-side"); if(ds) ds.textContent=t("backup_data");
   const lo=document.getElementById("logout-btn"); if(lo) lo.textContent=t("log_out");
   const who=document.getElementById("who"); if(who && currentUser) who.innerHTML=t("signed_in_as")+' <b>'+esc(currentUser)+'</b>';
   renderThemeIcons();
@@ -617,7 +627,7 @@ const PALETTE = ["#3b82f6","#ef4444","#22c55e","#f0b429","#a855f7","#06b6d4","#e
 function defaultData(){
   return {
     version:1,
-    settings:{ theme:"dark", lang:"en", monthlyBudget:0, categoryBudgets:{} },
+    settings:{ theme:"dark", lang:"ar", monthlyBudget:0, categoryBudgets:{} },
     categories:[
       {id:"c_salary",  name:"Salary",        type:"income",  color:"#22c55e"},
       {id:"c_free",    name:"Freelance",     type:"income",  color:"#14b8a6"},
@@ -652,7 +662,7 @@ let ui = {
 /* Normalize a state object loaded from the server (fill in any missing parts). */
 function normalize(d){
   if(!d||!Array.isArray(d.categories)||!Array.isArray(d.transactions)) return defaultData();
-  d.settings = Object.assign({theme:"dark",lang:"en",monthlyBudget:0,categoryBudgets:{}}, d.settings||{});
+  d.settings = Object.assign({theme:"dark",lang:"ar",monthlyBudget:0,categoryBudgets:{}}, d.settings||{});
   d.bills = d.bills||[]; d.goals = d.goals||[];
   return d;
 }
@@ -1021,7 +1031,7 @@ function viewDashboard(){
         </div>
       </div>
     </div>`;
-  return `${hero}${quickAddBar()}${cards}${budgetSnapshot(mk)}${alerts}${dash}${savings}`;
+  return `${hero}${cards}${budgetSnapshot(mk)}${alerts}${dash}${savings}`;
 }
 
 /* ---------------- DONUT ---------------- */
@@ -1530,31 +1540,6 @@ function budgetModal(){
 }
 
 /* ---- data menu / import / reset ---- */
-function dataMenuModal(){
-  showModal(`<div class="modal">
-    <div class="modal-head"><h2>${t('backup_title')}</h2><button class="icon-btn" data-action="close">${I.x}</button></div>
-    <div class="modal-body">
-      <p class="muted small mb16">${t('backup_hint')}</p>
-      <button class="btn mb12" style="width:100%" data-action="export">${t('export_json')}</button>
-      <button class="btn mb12" style="width:100%" data-action="import-pick">${t('import_json')}</button>
-      <input type="file" id="import-file" accept="application/json,.json" class="hide">
-      <button class="btn btn-danger" style="width:100%" data-action="reset-confirm">${t('reset_all')}</button>
-    </div>
-  </div>`);
-}
-function resetModal(){
-  showModal(`<div class="modal">
-    <div class="modal-head"><h2>${t('reset_title')}</h2><button class="icon-btn" data-action="close">${I.x}</button></div>
-    <div class="modal-body">
-      <p class="mb12">${t('reset_warn')}</p>
-      <p class="small muted">${t('type_delete')}</p>
-      <input id="reset-confirm-input" class="input mt8" type="text" placeholder="DELETE" autocomplete="off">
-    </div>
-    <div class="modal-foot"><button class="btn" data-action="close">${t('cancel')}</button>
-      <button class="btn btn-danger" data-action="reset-do">${t('delete_everything')}</button></div>
-  </div>`);
-}
-
 /* ---- toast ---- */
 function toast(msg){
   const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
@@ -1580,7 +1565,6 @@ document.addEventListener("click",e=>{
   if(a==="nav"){ ui.view=el.dataset.view; render(); return; }
   if(a==="theme"){ state.settings.theme=state.settings.theme==="dark"?"light":"dark"; commit(); return; }
   if(a==="lang"){ setLang(curLang()==="ar"?"en":"ar"); return; }
-  if(a==="data-menu"){ dataMenuModal(); return; }
 
   // quick add
   if(a==="qadd"){
@@ -1633,12 +1617,6 @@ document.addEventListener("click",e=>{
   if(a==="edit-goal"){ goalModal(state.goals.find(g=>g.id===id)); return; }
   if(a==="del-goal"){ if(confirm(t("c_del_goal"))){ state.goals=state.goals.filter(g=>g.id!==id); commit(); toast(t("t_goal_deleted")); } return; }
   if(a==="add-contrib"){ contribModal(state.goals.find(g=>g.id===id)); return; }
-
-  // data
-  if(a==="export"){ exportData(); return; }
-  if(a==="import-pick"){ document.getElementById("import-file").click(); return; }
-  if(a==="reset-confirm"){ resetModal(); return; }
-  if(a==="reset-do"){ doReset(); return; }
 });
 
 /* form submits */
@@ -1719,7 +1697,6 @@ document.addEventListener("change",e=>{
   else if(a==="tx-cat"){ ui.txCat=el.value; render(); }
   else if(a==="tx-type"){ ui.txType=el.value; render(); }
   else if(a==="qa-cat"){ ui.qaCat=el.value; } // remember selection; no re-render needed
-  if(e.target.id==="import-file"){ importData(e.target.files[0]); }
 });
 
 /* ---------- complex action helpers ---------- */
@@ -1761,36 +1738,6 @@ function payBill(id){
 }
 
 /* ---------- data export/import/reset ---------- */
-function exportData(){
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-  const url=URL.createObjectURL(blob);
-  const aEl=document.createElement("a");
-  aEl.href=url; aEl.download="finance-backup-"+todayISO()+".json";
-  document.body.appendChild(aEl); aEl.click(); aEl.remove(); URL.revokeObjectURL(url);
-  toast(t("t_backup_downloaded"));
-}
-function importData(file){
-  if(!file) return;
-  const r=new FileReader();
-  r.onload=()=>{
-    try{
-      const d=JSON.parse(r.result);
-      if(!d||!Array.isArray(d.categories)||!Array.isArray(d.transactions)) throw new Error("bad");
-      if(!confirm(t("c_import_replace"))) return;
-      d.settings=Object.assign({theme:state.settings.theme,lang:state.settings.lang,monthlyBudget:0,categoryBudgets:{}},d.settings||{});
-      d.bills=d.bills||[]; d.goals=d.goals||[];
-      state=d; closeModal(); commit(); applyStaticLang(); toast(t("t_data_imported"));
-    }catch(err){ toast(t("t_invalid_backup")); }
-  };
-  r.readAsText(file);
-}
-function doReset(){
-  const inp=document.getElementById("reset-confirm-input");
-  if(!inp||inp.value.trim().toUpperCase()!=="DELETE"){ toast(t("t_type_delete")); return; }
-  const keepLang=state.settings.lang;
-  state=defaultData(); state.settings.lang=keepLang; closeModal(); commit(); applyStaticLang(); toast(t("t_all_reset"));
-}
-
 /* ---------- keyboard ---------- */
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape") closeModal();
