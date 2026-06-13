@@ -439,6 +439,7 @@ const STR = {
     enter_user_pass:"Enter a username and password.", something_wrong:"Something went wrong.",
     cannot_reach:"Could not reach the server. Is it running?", could_not_load:"Could not load your data.",
     income:"Income", expenses:"Expenses", remaining_budget:"Remaining Budget",
+    add_income:"Add Income", remaining_amount:"Remaining Amount", inc_minus_exp:"income − expenses",
     of_x:"of {x}", no_budget_set:"No budget set", upcoming_bills:"Upcoming Bills",
     due_overdue_7:"due / overdue (7 days)", bill_reminders:"Bill Reminders", pay:"Pay",
     spending_by_cat:"Spending by Category", inc_vs_exp:"Income vs Expenses", last_6_months:"last 6 months",
@@ -511,6 +512,7 @@ const STR = {
     enter_user_pass:"أدخل اسم المستخدم وكلمة المرور.", something_wrong:"حدث خطأ ما.",
     cannot_reach:"تعذّر الوصول إلى الخادم. هل هو يعمل؟", could_not_load:"تعذّر تحميل بياناتك.",
     income:"الدخل", expenses:"المصروفات", remaining_budget:"الميزانية المتبقية",
+    add_income:"إضافة دخل", remaining_amount:"المبلغ المتبقي", inc_minus_exp:"الدخل − المصروفات",
     of_x:"من {x}", no_budget_set:"لم تُحدَّد ميزانية", upcoming_bills:"الفواتير القادمة",
     due_overdue_7:"مستحقة / متأخرة (٧ أيام)", bill_reminders:"تذكيرات الفواتير", pay:"دفع",
     spending_by_cat:"الإنفاق حسب الفئة", inc_vs_exp:"الدخل مقابل المصروفات", last_6_months:"آخر ٦ أشهر",
@@ -939,7 +941,7 @@ function viewDashboard(){
   const mk = ui.dashMonth;
   const inc = monthIncome(mk), exp = monthExpense(mk);
   const budget = state.settings.monthlyBudget||0;
-  const remaining = budget - exp;
+  const remainingAmt = inc - exp; // money left = income earned minus what was spent
   const up = upcomingBills();
   const overdue = up.filter(b=>billStatus(b).state==="overdue");
   const soon = up.filter(b=>billStatus(b).state==="soon");
@@ -955,10 +957,10 @@ function viewDashboard(){
         <div class="stat-label">${t('expenses')}</div>
         <div class="stat-value txt-r" data-count="${exp}" data-kind="money">${fmt(exp)}</div>
         <div class="stat-sub">${monthLabel(mk)}</div></div>
-      <div class="stat anim-in" style="animation-delay:.19s"><div class="stat-accent" style="background:${budget?(remaining<0?'var(--red)':'var(--accent)'):'var(--border-2)'}"></div>
-        <div class="stat-label">${t('remaining_budget')}</div>
-        <div class="stat-value ${budget?(remaining<0?'txt-r':''):'faint'}" ${budget?`data-count="${remaining}" data-kind="money"`:""}>${budget?fmt(remaining):"—"}</div>
-        <div class="stat-sub">${budget?t('of_x',{x:fmt(budget)}):'<span class="faint">'+t('no_budget_set')+'</span>'}</div></div>
+      <div class="stat anim-in" style="animation-delay:.19s"><div class="stat-accent" style="background:${remainingAmt<0?'var(--red)':'var(--green)'}"></div>
+        <div class="stat-label">${t('remaining_amount')}</div>
+        <div class="stat-value ${remainingAmt<0?'txt-r':'txt-g'}" data-count="${remainingAmt}" data-kind="money">${fmt(remainingAmt)}</div>
+        <div class="stat-sub">${t('inc_minus_exp')}</div></div>
       <div class="stat anim-in" style="animation-delay:.26s"><div class="stat-accent" style="background:${up.length?'var(--yellow)':'var(--border-2)'}"></div>
         <div class="stat-label">${t('upcoming_bills')}</div>
         <div class="stat-value" data-count="${up.length}" data-kind="int">${up.length}</div>
@@ -1033,7 +1035,7 @@ function viewDashboard(){
         </div>
         <div class="flex wrap" style="gap:10px">
           <input type="month" class="input" style="width:auto" value="${mk}" data-action="dash-month">
-          <button class="btn btn-primary" data-action="add-tx">${I.plus} ${t('add_transaction')}</button>
+          <button class="btn btn-primary" data-action="add-income">${I.plus} ${t('add_income')}</button>
         </div>
       </div>
     </div>`;
@@ -1392,9 +1394,9 @@ function closeModal(){ document.getElementById("modal-root").innerHTML=""; }
 function val(id){ const e=document.getElementById(id); return e?e.value:""; }
 
 /* ---- transaction modal ---- */
-function txModal(tx){
+function txModal(tx, defType){
   const editing=!!tx;
-  const type=tx?tx.type:"expense";
+  const type=tx?tx.type:(defType||"expense");
   const cats=state.categories.filter(c=>c.type===type);
   const catOpts=cats.map(c=>`<option value="${c.id}"${tx&&tx.categoryId===c.id?" selected":""}>${esc(catName(c))}</option>`).join("");
   showModal(`<form class="modal" data-action="save-tx" data-id="${tx?tx.id:""}">
@@ -1583,6 +1585,7 @@ document.addEventListener("click",e=>{
 
   // dashboard / generic add
   if(a==="add-tx"){ txModal(null); return; }
+  if(a==="add-income"){ txModal(null, "income"); return; }
   if(a==="edit-tx"){ txModal(state.transactions.find(t=>t.id===id)); return; }
   if(a==="del-tx"){ if(confirm(t("c_del_tx"))){ state.transactions=state.transactions.filter(x=>x.id!==id); commit(); toast(t("t_tx_deleted")); } return; }
 
