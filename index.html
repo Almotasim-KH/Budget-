@@ -231,6 +231,7 @@ input[type=color].input{padding:4px;height:42px}
 @media(max-width:760px){ .hero{padding:20px 18px 28px} .hero-title{font-size:21px} }
 @media (prefers-reduced-motion: reduce){
   .hero-aurora,.wave-a,.wave-b,.anim-in{animation:none !important}
+  .auth-tab-indicator{transition:none !important}
 }
 
 /* ===================== RESPONSIVE ===================== */
@@ -329,12 +330,14 @@ img,svg,canvas{max-width:100%}
 .auth-overlay[hidden]{display:none}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);
   border-radius:16px;padding:30px 28px;box-shadow:var(--shadow)}
-.auth-tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);
+.auth-tabs{position:relative;display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);
   border-radius:12px;padding:5px;margin-bottom:22px}
-.auth-tab{flex:1;padding:10px;border-radius:9px;font-weight:600;font-size:14px;color:var(--text-dim);
-  background:transparent;border:none;transition:.15s;cursor:pointer}
+.auth-tab-indicator{position:absolute;top:5px;bottom:5px;left:0;width:0;border-radius:9px;background:var(--accent);
+  transition:transform .3s cubic-bezier(.4,0,.2,1),width .3s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.auth-tab{position:relative;z-index:1;flex:1;padding:10px;border-radius:9px;font-weight:600;font-size:14px;
+  color:var(--text-dim);background:transparent;border:none;transition:color .2s;cursor:pointer}
 .auth-tab:hover{color:var(--text)}
-.auth-tab.on{background:var(--accent);color:#fff}
+.auth-tab.on{color:#fff}
 .auth-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:22px}
 .auth-card h2,.auth-card .auth-sub{text-align:center}
 .auth-card h2{font-size:21px;font-weight:750;letter-spacing:-.01em}
@@ -358,6 +361,7 @@ img,svg,canvas{max-width:100%}
 <div id="auth-overlay" class="auth-overlay">
   <div class="auth-card">
     <div class="auth-tabs">
+      <span class="auth-tab-indicator" id="auth-tab-indicator"></span>
       <button type="button" id="tab-login" class="auth-tab on" data-action="auth-mode" data-mode="login">Log in</button>
       <button type="button" id="tab-signup" class="auth-tab" data-action="auth-mode" data-mode="signup">Create account</button>
     </div>
@@ -1785,6 +1789,7 @@ function showAuth(){
   $auth.overlay().removeAttribute("hidden");
   $auth.pass().value="";
   authError("");
+  slideAuthTabs(document.querySelector(".auth-tab.on"), false);
   $auth.user().focus();
 }
 function hideAuth(){ $auth.overlay().setAttribute("hidden",""); }
@@ -1803,7 +1808,24 @@ function setAuthMode(mode){
   if(tl) tl.classList.toggle("on", login);
   if(ts) ts.classList.toggle("on", !login);
   $auth.pass().setAttribute("autocomplete", login ? "current-password" : "new-password");
+  slideAuthTabs(login ? tl : ts, true);
   authError("");
+}
+// Slide the tab indicator onto the active tab, and (optionally) swipe the
+// heading in from the active tab's side so switching feels like a swipe.
+function slideAuthTabs(active, animateHeading){
+  const ind=document.getElementById("auth-tab-indicator"), tabs=document.querySelector(".auth-tabs");
+  if(!ind||!tabs||!active||!active.offsetWidth) return; // overlay hidden -> 0 width, skip
+  ind.style.width=active.offsetWidth+"px";
+  ind.style.transform="translateX("+active.offsetLeft+"px)";
+  if(animateHeading && !prefersReduce()){
+    const dir=(active.offsetLeft+active.offsetWidth/2 > tabs.clientWidth/2) ? 1 : -1;
+    ["auth-title","auth-subtitle"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.animate([{opacity:0,transform:"translateX("+(dir*18)+"px)"},{opacity:1,transform:"none"}],
+        {duration:280,easing:"cubic-bezier(.2,.75,.25,1)"});
+    });
+  }
 }
 
 async function submitAuth(e){
@@ -1852,6 +1874,9 @@ async function logout(){
   $auth.form().addEventListener("submit", submitAuth);
   setAuthMode("login");
   applyStaticLang();
+  // Lock the tab indicator in place once fonts/layout have settled.
+  requestAnimationFrame(()=>slideAuthTabs(document.querySelector(".auth-tab.on"), false));
+  window.addEventListener("resize",()=>slideAuthTabs(document.querySelector(".auth-tab.on"), false));
   try{
     const me=await fetch("/api/auth/me");
     if(me.ok){ const u=await me.json(); await enterApp(u.username); }
