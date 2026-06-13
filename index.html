@@ -423,10 +423,9 @@ img,svg,canvas{max-width:100%}
 /* ============================================================
    Budgettr — Personal Finance, English/Arabic, no deps.
    Data lives in MySQL per logged-in user (via /api/data).
-   Export/import JSON still works for manual backup.
    ============================================================ */
 
-const CONFIG = { currency: "SAR", storeKey: "pfcc_v1" };
+const CONFIG = { currency: "SAR" };
 
 /* ============================================================
    i18n — English / Arabic
@@ -438,7 +437,7 @@ const STR = {
     cat_c_rent:"Rent", cat_c_groc:"Groceries", cat_c_trans:"Transport", cat_c_ent:"Entertainment",
     cat_c_util:"Utilities", cat_c_dine:"Dining", cat_c_health:"Health", cat_c_shop:"Shopping", cat_c_bills:"Bills",
     nav_dashboard:"Dashboard", nav_transactions:"Transactions", nav_budget:"Budget", nav_bills:"Bills", nav_goals:"Goals",
-    data:"Data", backup_data:"Backup & Data", log_out:"Log out",
+    log_out:"Log out",
     light_mode:"Light mode", dark_mode:"Dark mode", signed_in_as:"Signed in as",
     auth_welcome:"Welcome back", auth_create:"Create your account",
     auth_login_sub:"Log in to your budget.", auth_signup_sub:"Pick a username and password.",
@@ -487,22 +486,14 @@ const STR = {
     saved_so_far:"Saved so far: {a} of {b}", edit_budgets_title:"Edit Budgets",
     overall_monthly_budget_cur:"Overall monthly budget ({c})",
     per_cat_hint:"Per-category budgets (leave blank to skip). These apply every month.", save_budgets:"Save budgets",
-    backup_title:"Backup & Data", backup_hint:"Your data is saved to your account. Export regularly to keep a backup.",
-    export_json:"⬇ Export data (JSON)", import_json:"⬆ Import data (JSON)", reset_all:"⚠ Reset all data",
-    reset_title:"Reset everything?",
-    reset_warn:"This permanently deletes <b>all</b> transactions, bills, goals, budgets and categories. This cannot be undone.",
-    type_delete:"Type <b>DELETE</b> to confirm.", delete_everything:"Delete everything",
     t_tx_deleted:"Transaction deleted", t_tx_updated:"Transaction updated", t_tx_added:"Transaction added",
     t_enter_amount:"Enter a valid amount", t_enter_name:"Enter a name",
     t_cat_updated:"Category updated", t_cat_added:"Category added", t_cat_deleted:"Category deleted",
     t_bill_updated:"Bill updated", t_bill_added:"Bill added", t_bill_deleted:"Bill deleted",
     t_goal_updated:"Goal updated", t_goal_created:"Goal created", t_goal_deleted:"Goal deleted",
     t_enter_target:"Enter a valid target", t_contrib_added:"Contribution added", t_budgets_saved:"Budgets saved",
-    t_backup_downloaded:"Backup downloaded", t_data_imported:"Data imported", t_invalid_backup:"Invalid backup file",
-    t_all_reset:"All data reset", t_type_delete:'Type "DELETE" to confirm',
     t_bill_paid_logged:"Bill paid — logged as expense", t_paid_rolled:"Paid — rolled to {d}",
     c_del_tx:"Delete this transaction?", c_del_bill:"Delete this bill?", c_del_goal:"Delete this goal and its contributions?",
-    c_import_replace:"Importing will REPLACE all current data. Continue?",
     c_cat_used:"“{name}” is used by {n} item(s). They will be moved to “Uncategorized”. Continue?",
     c_del_cat:"Delete category “{name}”?", bill_prefix:"Bill: "
   },
@@ -512,7 +503,7 @@ const STR = {
     cat_c_rent:"الإيجار", cat_c_groc:"البقالة", cat_c_trans:"المواصلات", cat_c_ent:"الترفيه",
     cat_c_util:"الخدمات", cat_c_dine:"المطاعم", cat_c_health:"الصحة", cat_c_shop:"التسوق", cat_c_bills:"الفواتير",
     nav_dashboard:"لوحة التحكم", nav_transactions:"المعاملات", nav_budget:"الميزانية", nav_bills:"الفواتير", nav_goals:"الأهداف",
-    data:"البيانات", backup_data:"النسخ الاحتياطي", log_out:"تسجيل الخروج",
+    log_out:"تسجيل الخروج",
     light_mode:"الوضع الفاتح", dark_mode:"الوضع الداكن", signed_in_as:"مسجّل الدخول باسم",
     auth_welcome:"مرحبًا بعودتك", auth_create:"أنشئ حسابك",
     auth_login_sub:"سجّل الدخول إلى ميزانيتك.", auth_signup_sub:"اختر اسم مستخدم وكلمة مرور.",
@@ -561,22 +552,14 @@ const STR = {
     saved_so_far:"المدخر حتى الآن: {a} من {b}", edit_budgets_title:"تعديل الميزانيات",
     overall_monthly_budget_cur:"الميزانية الشهرية الكلية ({c})",
     per_cat_hint:"ميزانيات الفئات (اتركها فارغة للتخطي). تنطبق كل شهر.", save_budgets:"حفظ الميزانيات",
-    backup_title:"النسخ الاحتياطي والبيانات", backup_hint:"بياناتك محفوظة في حسابك. صدّرها بانتظام للاحتفاظ بنسخة احتياطية.",
-    export_json:"⬇ تصدير البيانات (JSON)", import_json:"⬆ استيراد البيانات (JSON)", reset_all:"⚠ إعادة تعيين كل البيانات",
-    reset_title:"إعادة تعيين كل شيء؟",
-    reset_warn:"هذا يحذف نهائيًا <b>كل</b> المعاملات والفواتير والأهداف والميزانيات والفئات. لا يمكن التراجع.",
-    type_delete:"اكتب <b>DELETE</b> للتأكيد.", delete_everything:"حذف كل شيء",
     t_tx_deleted:"حُذفت المعاملة", t_tx_updated:"حُدّثت المعاملة", t_tx_added:"أُضيفت المعاملة",
     t_enter_amount:"أدخل مبلغًا صحيحًا", t_enter_name:"أدخل اسمًا",
     t_cat_updated:"حُدّثت الفئة", t_cat_added:"أُضيفت الفئة", t_cat_deleted:"حُذفت الفئة",
     t_bill_updated:"حُدّثت الفاتورة", t_bill_added:"أُضيفت الفاتورة", t_bill_deleted:"حُذفت الفاتورة",
     t_goal_updated:"حُدّث الهدف", t_goal_created:"أُنشئ الهدف", t_goal_deleted:"حُذف الهدف",
     t_enter_target:"أدخل هدفًا صحيحًا", t_contrib_added:"أُضيفت المساهمة", t_budgets_saved:"حُفظت الميزانيات",
-    t_backup_downloaded:"تم تنزيل النسخة الاحتياطية", t_data_imported:"تم استيراد البيانات", t_invalid_backup:"ملف نسخة احتياطية غير صالح",
-    t_all_reset:"تم إعادة تعيين كل البيانات", t_type_delete:'اكتب «DELETE» للتأكيد',
     t_bill_paid_logged:"دُفعت الفاتورة — سُجّلت كمصروف", t_paid_rolled:"دُفعت — حُرّكت إلى {d}",
     c_del_tx:"حذف هذه المعاملة؟", c_del_bill:"حذف هذه الفاتورة؟", c_del_goal:"حذف هذا الهدف ومساهماته؟",
-    c_import_replace:"الاستيراد سيستبدل كل البيانات الحالية. متابعة؟",
     c_cat_used:"«{name}» مستخدمة في {n} عنصر. ستُنقل إلى «غير مصنّف». متابعة؟",
     c_del_cat:"حذف الفئة «{name}»؟", bill_prefix:"فاتورة: "
   }
@@ -762,6 +745,13 @@ function quickAddTx(amount, categoryId){
   if(!categoryId){ toast(t("t_pick_category")); return false; }
   state.transactions.push({ id:uid("t"), type:"expense", amount, categoryId, date:todayISO(), note:"" });
   toast(t("t_tx_added")); commit(); return true;
+}
+// Read the Quick-Add Bar inputs, add the transaction, and refocus the amount
+// field so the user can keep entering. Shared by the click and Enter handlers.
+function submitQuickAdd(){
+  if(quickAddTx(getNum("qa-amount"), val("qa-cat"))){
+    const i=document.getElementById("qa-amount"); if(i) i.focus();
+  }
 }
 // First expense category id, used as the Quick-Add Bar's default selection.
 function firstExpenseCat(){ const c=state.categories.find(x=>x.type==="expense"); return c?c.id:null; }
@@ -1611,11 +1601,7 @@ document.addEventListener("click",e=>{
   if(a==="auth-mode"){ setAuthMode(el.dataset.mode); return; }
 
   // quick add
-  if(a==="qadd"){
-    const amt=getNum("qa-amount");
-    if(quickAddTx(amt, val("qa-cat"))){ const i=document.getElementById("qa-amount"); if(i) i.focus(); }
-    return;
-  }
+  if(a==="qadd"){ submitQuickAdd(); return; }
   if(a==="qadd-mobile"){ quickGridModal(); return; }
   if(a==="qgrid-pick"){ quickAmountModal(id); return; }
 
@@ -1791,14 +1777,12 @@ function payBill(id){
   commit(); toast(b.recurring==="none"?t("t_bill_paid_logged"):t("t_paid_rolled",{d:fmtDate(b.dueDate)}));
 }
 
-/* ---------- data export/import/reset ---------- */
 /* ---------- keyboard ---------- */
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape") closeModal();
   if(e.key==="Enter" && e.target && e.target.id==="qa-amount"){
     e.preventDefault();
-    const amt=getNum("qa-amount");
-    if(quickAddTx(amt, val("qa-cat"))){ const i=document.getElementById("qa-amount"); if(i) i.focus(); }
+    submitQuickAdd();
   }
 });
 
