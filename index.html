@@ -236,11 +236,28 @@ input[type=color].input{padding:4px;height:42px}
 img,svg,canvas{max-width:100%}
 .card,.stat,.tx-main,.content,main{min-width:0}
 
+/* quick-add entry + budget snapshot */
+.qadd{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:8px 10px;margin-bottom:16px}
+.qadd-cur{color:var(--text-faint);font-weight:700;padding-left:4px}
+.qadd-amt{flex:1;min-width:80px}
+.qadd-cat{width:auto;max-width:200px}
+.qadd-mobile{display:none;width:100%;justify-content:center;margin-bottom:16px}
+.qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qtile{border:none;border-radius:12px;padding:16px 6px;color:#fff;font-weight:600;font-size:13px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;text-align:center}
+.qtile .qtile-dot{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.85)}
+.snap-big{font-size:30px;font-weight:800;line-height:1.1}
+.snap-row{margin-bottom:12px}
+.snap-empty{text-align:center;padding:8px 0}
+
 @media(max-width:1000px){
   .summary-grid{grid-template-columns:repeat(2,1fr)}
   .dash-grid{grid-template-columns:1fr}
 }
 @media(max-width:760px){
+  .qadd-desktop{display:none}
+  .qadd-mobile{display:flex}
   .layout{flex-direction:column}
   .sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;width:100%;height:auto;
     flex-direction:row;border-right:none;border-top:1px solid var(--border);z-index:50;
@@ -416,6 +433,10 @@ const STR = {
     savings_goals:"Savings Goals", saved_total:"{x} saved total",
     good_morning:"Good morning", good_afternoon:"Good afternoon", good_evening:"Good evening",
     heres_your_money:"Here's your money, {m}", net:"Net", add_transaction:"Add Transaction",
+    add_expense:"Add expense", back:"Back", t_pick_category:"Pick a category.",
+    budget_snapshot:"Budget Snapshot", left_to_spend:"left of {x}", spent_this_month:"spent this month",
+    set_budgets:"Set budgets", snap_empty:"Set budgets to see your spending at a glance.",
+    snap_no_cats:"No category budgets set yet.",
     total:"Total", no_expenses_month:"No expenses recorded this month.", no_transactions_yet:"No transactions yet.",
     d_overdue:"{n}d overdue", due_today:"due today", in_nd:"in {n}d", today_short:"today",
     all_months:"All months", all_categories:"All categories", all_types:"All types",
@@ -481,6 +502,10 @@ const STR = {
     savings_goals:"أهداف الادخار", saved_total:"إجمالي المدخر {x}",
     good_morning:"صباح الخير", good_afternoon:"طاب يومك", good_evening:"مساء الخير",
     heres_your_money:"إليك أموالك، {m}", net:"الصافي", add_transaction:"إضافة معاملة",
+    add_expense:"إضافة مصروف", back:"رجوع", t_pick_category:"اختر فئة.",
+    budget_snapshot:"نظرة على الميزانية", left_to_spend:"متبقٍ من {x}", spent_this_month:"أُنفق هذا الشهر",
+    set_budgets:"تحديد الميزانيات", snap_empty:"حدّد الميزانيات لرؤية إنفاقك بلمحة.",
+    snap_no_cats:"لم يتم تحديد ميزانيات للفئات بعد.",
     total:"الإجمالي", no_expenses_month:"لا مصروفات مسجّلة هذا الشهر.", no_transactions_yet:"لا معاملات بعد.",
     d_overdue:"متأخرة {n} يوم", due_today:"مستحقة اليوم", in_nd:"خلال {n} يوم", today_short:"اليوم",
     all_months:"كل الأشهر", all_categories:"كل الفئات", all_types:"كل الأنواع",
@@ -620,6 +645,7 @@ let ui = {
   dashMonth: monthKey(todayISO()),
   budgetMonth: monthKey(todayISO()),
   txMonth:"all", txCat:"all", txType:"all",
+  qaCat:null,
   calY: new Date().getFullYear(), calM: new Date().getMonth()
 };
 
@@ -696,6 +722,16 @@ function addPeriod(iso,freq){ return localISO(stepDate(parseISO(iso),freq,1)); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function catById(id){ return state.categories.find(c=>c.id===id); }
 function ratioClass(r){ return r<0.75?"g":(r<=1?"y":"r"); }
+
+// Append a same-day expense from the quick-entry surfaces. Returns true on success.
+function quickAddTx(amount, categoryId){
+  if(isNaN(amount)||amount<=0){ toast(t("t_enter_amount")); return false; }
+  if(!categoryId){ toast(t("t_pick_category")); return false; }
+  state.transactions.push({ id:uid("t"), type:"expense", amount, categoryId, date:todayISO(), note:"" });
+  toast(t("t_tx_added")); commit(); return true;
+}
+// First expense category id, used as the Quick-Add Bar's default selection.
+function firstExpenseCat(){ const c=state.categories.find(x=>x.type==="expense"); return c?c.id:null; }
 
 /* ---------- DERIVED ---------- */
 function txInMonth(mk){ return state.transactions.filter(t=>monthKey(t.date)===mk); }
@@ -814,6 +850,74 @@ function render(){
   if(ui.view==="dashboard") mountDashFX(); else stopDashFX();
 }
 
+/* ---------------- QUICK ADD ---------------- */
+function quickAddBar(){
+  const cats=state.categories.filter(c=>c.type==="expense");
+  if(!ui.qaCat||!cats.some(c=>c.id===ui.qaCat)) ui.qaCat=firstExpenseCat();
+  const opts=cats.map(c=>`<option value="${c.id}"${c.id===ui.qaCat?" selected":""}>${esc(c.name)}</option>`).join("");
+  return `<div class="qadd qadd-desktop">
+      <span class="qadd-cur">${CONFIG.currency}</span>
+      <input id="qa-amount" class="input qadd-amt" type="number" min="0" step="0.01" inputmode="decimal"
+        placeholder="0.00" autocomplete="off">
+      <select id="qa-cat" class="input qadd-cat" data-action="qa-cat">${opts}</select>
+      <button class="btn btn-primary" data-action="qadd">${I.plus} ${t('add')}</button>
+    </div>
+    <button class="btn btn-primary qadd-mobile" data-action="qadd-mobile">${I.plus} ${t('add_expense')}</button>`;
+}
+function quickGridModal(){
+  const tiles=state.categories.filter(c=>c.type==="expense").map(c=>
+    `<button type="button" class="qtile" style="background:${c.color}" data-action="qgrid-pick" data-id="${c.id}">
+       <span class="qtile-dot"></span>${esc(c.name)}</button>`).join("");
+  showModal(`<div class="modal">
+    <div class="modal-head"><h2>${t('add_expense')}</h2><button class="icon-btn" data-action="close">${I.x}</button></div>
+    <div class="modal-body"><div class="qgrid">${tiles}</div></div></div>`);
+}
+function quickAmountModal(catId){
+  const c=catById(catId)||{name:t('uncategorized'),color:"#637385"};
+  showModal(`<form class="modal" data-action="save-qadd" data-id="${catId}">
+    <div class="modal-head"><h2><span class="dot" style="background:${c.color}"></span> ${esc(c.name)}</h2>
+      <button type="button" class="icon-btn" data-action="close">${I.x}</button></div>
+    <div class="modal-body">
+      <div class="field"><label>${t('amount_cur',{c:CONFIG.currency})}</label>
+        <input id="qa-m-amount" class="input" type="number" min="0" step="0.01" inputmode="decimal" required autofocus></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-action="qadd-mobile">${t('back')}</button>
+      <button type="submit" class="btn btn-primary">${I.plus} ${t('add')}</button>
+    </div></form>`);
+}
+
+/* ---------------- BUDGET SNAPSHOT ---------------- */
+function budgetSnapshot(mk){
+  const budget=state.settings.monthlyBudget||0;
+  const cb=state.settings.categoryBudgets||{};
+  const rows=state.categories.filter(c=>c.type==="expense"&&cb[c.id]>0).map(c=>{
+    const spent=catSpend(c.id,mk), b=cb[c.id], r=b>0?spent/b:0, cls=ratioClass(r);
+    return {c,spent,b,r,cls};
+  }).sort((a,b)=>b.r-a.r);
+
+  if(!budget && rows.length===0){
+    return `<div class="card mt16"><div class="card-title">${t('budget_snapshot')}</div>
+      <div class="snap-empty"><p class="muted">${t('snap_empty')}</p>
+      <button class="btn btn-primary mt8" data-action="edit-budgets">${t('set_budgets')}</button></div></div>`;
+  }
+  const spentTotal=monthExpense(mk), left=budget-spentTotal;
+  const big = budget
+    ? `<div class="snap-big ${left<0?'txt-r':'txt-g'}">${fmt(left)}</div>
+       <div class="small faint">${t('left_to_spend',{x:fmt(budget)})}</div>`
+    : `<div class="snap-big faint">${fmtShort(spentTotal)}</div><div class="small faint">${t('spent_this_month')}</div>`;
+  const bars = rows.length ? rows.map(r=>`<div class="snap-row">
+      <div class="between small"><span class="fw7"><span class="dot" style="background:${r.c.color}"></span> ${esc(r.c.name)}</span>
+        <span class="tnum muted">${fmt(r.spent)} / ${fmt(r.b)}</span></div>
+      <div class="bar mt8"><div class="bar-fill fill-${r.cls}" style="width:${(Math.min(r.r,1)*100).toFixed(1)}%"></div></div>
+    </div>`).join("")
+    : `<div class="snap-empty"><p class="muted">${t('snap_no_cats')}</p>
+       <button class="btn btn-sm btn-primary mt8" data-action="edit-budgets">${t('set_budgets')}</button></div>`;
+  return `<div class="card mt16"><div class="card-title">${t('budget_snapshot')}
+      <span class="faint" style="text-transform:none;font-weight:600">${monthLabel(mk)}</span></div>
+      <div class="mb16">${big}</div>${bars}</div>`;
+}
+
 /* ---------------- DASHBOARD ---------------- */
 function viewDashboard(){
   const mk = ui.dashMonth;
@@ -917,7 +1021,7 @@ function viewDashboard(){
         </div>
       </div>
     </div>`;
-  return `${hero}${cards}${alerts}${dash}${savings}`;
+  return `${hero}${quickAddBar()}${cards}${budgetSnapshot(mk)}${alerts}${dash}${savings}`;
 }
 
 /* ---------------- DONUT ---------------- */
@@ -1031,6 +1135,7 @@ function viewTransactions(){
   }).join("") : `<div class="empty">${I.inbox}<div>${t('no_tx_match')}</div></div>`;
 
   return `
+    ${quickAddBar()}
     <div class="between wrap mb16">
       <div class="flex wrap">
         <select class="input" style="width:auto" data-action="tx-month">${monthOpts}</select>
@@ -1477,6 +1582,15 @@ document.addEventListener("click",e=>{
   if(a==="lang"){ setLang(curLang()==="ar"?"en":"ar"); return; }
   if(a==="data-menu"){ dataMenuModal(); return; }
 
+  // quick add
+  if(a==="qadd"){
+    const amt=getNum("qa-amount");
+    if(quickAddTx(amt, val("qa-cat"))){ const i=document.getElementById("qa-amount"); if(i) i.focus(); }
+    return;
+  }
+  if(a==="qadd-mobile"){ quickGridModal(); return; }
+  if(a==="qgrid-pick"){ quickAmountModal(id); return; }
+
   // dashboard / generic add
   if(a==="add-tx"){ txModal(null); return; }
   if(a==="edit-tx"){ txModal(state.transactions.find(t=>t.id===id)); return; }
@@ -1532,6 +1646,13 @@ document.addEventListener("submit",e=>{
   const form=e.target.closest("[data-action]"); if(!form) return;
   const a=form.dataset.action, id=form.dataset.id;
   e.preventDefault();
+
+  if(a==="save-qadd"){
+    const amount=getNum("qa-m-amount");
+    if(isNaN(amount)||amount<=0){ toast(t("t_enter_amount")); return; }
+    state.transactions.push({ id:uid("t"), type:"expense", amount, categoryId:id, date:todayISO(), note:"" });
+    closeModal(); commit(); toast(t("t_tx_added")); return;
+  }
 
   if(a==="save-tx"){
     const amount=getNum("tx-amount");
@@ -1597,6 +1718,7 @@ document.addEventListener("change",e=>{
   else if(a==="tx-month"){ ui.txMonth=el.value; render(); }
   else if(a==="tx-cat"){ ui.txCat=el.value; render(); }
   else if(a==="tx-type"){ ui.txType=el.value; render(); }
+  else if(a==="qa-cat"){ ui.qaCat=el.value; } // remember selection; no re-render needed
   if(e.target.id==="import-file"){ importData(e.target.files[0]); }
 });
 
@@ -1670,7 +1792,14 @@ function doReset(){
 }
 
 /* ---------- keyboard ---------- */
-document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape") closeModal();
+  if(e.key==="Enter" && e.target && e.target.id==="qa-amount"){
+    e.preventDefault();
+    const amt=getNum("qa-amount");
+    if(quickAddTx(amt, val("qa-cat"))){ const i=document.getElementById("qa-amount"); if(i) i.focus(); }
+  }
+});
 
 /* ---------- AUTH ---------- */
 let authMode="login"; // "login" | "signup"
