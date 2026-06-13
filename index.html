@@ -1444,6 +1444,26 @@ function refreshTxCats(type){
   const cats=state.categories.filter(c=>c.type===type);
   sel.innerHTML=cats.map(c=>`<option value="${c.id}">${esc(catName(c))}</option>`).join("");
 }
+// Simplified income entry: amount + date + note only (no type/category).
+function incomeModal(){
+  showModal(`<form class="modal" data-action="save-income">
+    <div class="modal-head"><h2>${t('add_income')}</h2><button type="button" class="icon-btn" data-action="close">${I.x}</button></div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="field"><label>${t('amount_cur',{c:CONFIG.currency})}</label>
+          <input id="inc-amount" class="input" type="number" min="0" step="0.01" inputmode="decimal" required autofocus></div>
+        <div class="field"><label>${t('date')}</label>
+          <input id="inc-date" class="input" type="date" value="${todayISO()}" required></div>
+      </div>
+      <div class="field"><label>${t('note_optional')}</label>
+        <input id="inc-note" class="input" type="text" maxlength="120" placeholder="${t('note_ph')}"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-action="close">${t('cancel')}</button>
+      <button type="submit" class="btn btn-primary">${I.plus} ${t('add')}</button>
+    </div>
+  </form>`);
+}
 
 /* ---- category manager ---- */
 function catManagerModal(){
@@ -1599,7 +1619,7 @@ document.addEventListener("click",e=>{
 
   // dashboard / generic add
   if(a==="add-tx"){ txModal(null); return; }
-  if(a==="add-income"){ txModal(null, "income"); return; }
+  if(a==="add-income"){ incomeModal(); return; }
   if(a==="edit-tx"){ txModal(state.transactions.find(t=>t.id===id)); return; }
   if(a==="del-tx"){ if(confirm(t("c_del_tx"))){ state.transactions=state.transactions.filter(x=>x.id!==id); commit(); toast(t("t_tx_deleted")); } return; }
 
@@ -1652,6 +1672,15 @@ document.addEventListener("submit",e=>{
     const amount=getNum("qa-m-amount");
     if(isNaN(amount)||amount<=0){ toast(t("t_enter_amount")); return; }
     state.transactions.push({ id:uid("t"), type:"expense", amount, categoryId:id, date:todayISO(), note:"" });
+    closeModal(); commit(); toast(t("t_tx_added")); return;
+  }
+
+  if(a==="save-income"){
+    const amount=getNum("inc-amount");
+    if(isNaN(amount)||amount<=0){ toast(t("t_enter_amount")); return; }
+    const incCat=state.categories.find(c=>c.type==="income"); // default income bucket
+    state.transactions.push({ id:uid("t"), type:"income", amount, categoryId:incCat?incCat.id:"",
+      date:val("inc-date")||todayISO(), note:val("inc-note").trim() });
     closeModal(); commit(); toast(t("t_tx_added")); return;
   }
 
