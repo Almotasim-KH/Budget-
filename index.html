@@ -218,9 +218,9 @@ input[type=color].input{padding:4px;height:42px}
 .hero-content{position:relative;z-index:3}
 .hero-greet{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
 .hero-title{font-size:25px;font-weight:780;letter-spacing:-.02em;margin-top:5px}
-.net-pill{display:inline-flex;align-items:center;gap:7px;margin-top:13px;padding:6px 13px;border-radius:30px;
-  font-weight:700;font-size:13.5px;background:var(--surface-3);border:1px solid var(--border)}
-.net-pill svg{width:15px;height:15px}
+.hero-net{font-size:40px;font-weight:820;letter-spacing:-.03em;line-height:1.02;margin-top:14px;font-variant-numeric:tabular-nums}
+.hero-net-label{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;opacity:.9}
+.hero-net-label svg{width:14px;height:14px}
 .hero-wave{position:absolute;left:0;right:0;bottom:-1px;height:52px;z-index:2;pointer-events:none}
 .hero-wave svg{position:absolute;bottom:0;left:0;width:200%;height:100%}
 .wave-a{animation:waveX 13s linear infinite;opacity:.22}.wave-a path{fill:var(--accent)}
@@ -230,7 +230,7 @@ input[type=color].input{padding:4px;height:42px}
 .anim-in{animation:fadeUp .55s cubic-bezier(.2,.75,.25,1) both}
 .stat{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 .stat:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--border-2)}
-@media(max-width:760px){ .hero{padding:20px 18px 28px} .hero-title{font-size:21px} }
+@media(max-width:760px){ .hero{padding:20px 18px 28px} .hero-title{font-size:21px} .hero-net{font-size:32px} }
 @media (prefers-reduced-motion: reduce){
   .hero-aurora,.wave-a,.wave-b,.anim-in{animation:none !important}
   .auth-tab-indicator{transition:none !important}
@@ -1036,7 +1036,8 @@ function viewDashboard(){
         <div>
           <div class="hero-greet">${greet} · ${todayLong}</div>
           <div class="hero-title">${t('heres_your_money',{m:monthLabel(mk)})}</div>
-          <span class="net-pill ${net>=0?'txt-g':'txt-r'}">${net>=0?upA:dnA} ${t('net')} ${fmt(net)}</span>
+          <div class="hero-net ${net>=0?'txt-g':'txt-r'}" data-count="${net}" data-kind="money">${fmt(net)}</div>
+          <div class="hero-net-label ${net>=0?'txt-g':'txt-r'}">${net>=0?upA:dnA} ${t('net')}</div>
         </div>
         <div class="flex wrap" style="gap:10px">
           <input type="month" class="input" style="width:auto" value="${mk}" data-action="dash-month">
