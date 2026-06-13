@@ -91,6 +91,31 @@ test("save then reload returns the saved state", async () => {
   assert.strictEqual(reloaded.transactions[0].amount, 42);
 });
 
+test("a fresh-defaults payload cannot wipe an account that has data", async () => {
+  const f = jar();
+  await f("/api/auth/login", { method: "POST", body: JSON.stringify({ username: userA, password: pass }) });
+
+  // userA already has one transaction from the previous test. Confirm it's there.
+  const before = (await f("/api/data", { method: "GET" })).body;
+  assert.ok(before.transactions.length > 0, "precondition: userA has data");
+
+  // Simulate the dangerous case: the client posts untouched default state
+  // (e.g. a save firing before real data loaded). The server must refuse.
+  const seed = {
+    version: 1,
+    settings: { theme: "dark", lang: "ar", monthlyBudget: 0, categoryBudgets: {} },
+    categories: before.categories.map((c) => ({ id: c.id, name: c.name, type: c.type, color: c.color })),
+    transactions: [],
+    bills: [],
+    goals: []
+  };
+  await f("/api/data", { method: "PUT", body: JSON.stringify(seed) });
+
+  // Data must survive untouched.
+  const after = (await f("/api/data", { method: "GET" })).body;
+  assert.strictEqual(after.transactions.length, before.transactions.length, "transactions preserved");
+});
+
 test("user B cannot see user A's data (isolation)", async () => {
   const f = jar();
   const r = await f("/api/auth/signup", { method: "POST", body: JSON.stringify({ username: userB, password: pass }) });
