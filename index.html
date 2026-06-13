@@ -266,7 +266,8 @@ img,svg,canvas{max-width:100%}
   .layout{flex-direction:column}
   .sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;width:100%;height:auto;
     flex-direction:row;border-right:none;border-top:1px solid var(--border);z-index:50;
-    box-shadow:0 -4px 18px rgba(0,0,0,.25)}
+    box-shadow:0 -4px 18px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+  .sidebar.nav-hidden{transform:translateY(115%)}
   .brand,.sidebar-foot{display:none}
   .nav{flex-direction:row;padding:6px;gap:2px;justify-content:space-around}
   .nav-btn{flex-direction:column;gap:3px;padding:7px 2px;font-size:10.5px;border-radius:8px;justify-content:center;text-align:center}
@@ -1596,7 +1597,7 @@ document.addEventListener("click",e=>{
   if(a==="logout"){ logout(); return; }
 
   // nav & theme
-  if(a==="nav"){ ui.view=el.dataset.view; render(); return; }
+  if(a==="nav"){ ui.view=el.dataset.view; render(); window.scrollTo(0,0); document.querySelector(".sidebar").classList.remove("nav-hidden"); return; }
   if(a==="theme"){ state.settings.theme=state.settings.theme==="dark"?"light":"dark"; commit(); return; }
   if(a==="lang"){ setLang(curLang()==="ar"?"en":"ar"); return; }
   if(a==="auth-mode"){ setAuthMode(el.dataset.mode); return; }
@@ -1884,6 +1885,26 @@ async function logout(){
   applyStaticLang();
   showAuth();
 }
+
+/* ---------- mobile nav: hide on scroll down, reveal on scroll up ---------- */
+(function(){
+  const sb=document.querySelector(".sidebar");
+  if(!sb) return;
+  let lastY=window.scrollY||0, ticking=false;
+  function update(){
+    const y=window.scrollY||0, dy=y-lastY;
+    if(Math.abs(dy)>6){
+      // Hide only while scrolling down past the top; any up-scroll brings it back.
+      if(dy>0 && y>64) sb.classList.add("nav-hidden");
+      else sb.classList.remove("nav-hidden");
+      lastY=y;
+    }
+    ticking=false;
+  }
+  window.addEventListener("scroll",()=>{
+    if(!ticking){ requestAnimationFrame(update); ticking=true; }
+  },{passive:true});
+})();
 
 /* ---------- boot ---------- */
 (async function init(){
