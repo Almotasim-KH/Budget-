@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finance Command Center</title>
+<title>Budgettr</title>
 <style>
 /* ===================== THEME TOKENS ===================== */
 :root, [data-theme="dark"]{
@@ -63,7 +63,7 @@ a{color:var(--accent)}
 .topbar{display:flex;align-items:center;gap:14px;padding:16px 26px;border-bottom:1px solid var(--border);
   background:var(--bg);position:sticky;top:0;z-index:20;flex-wrap:wrap}
 .topbar h1{font-size:20px;font-weight:700;margin-right:auto}
-main{padding:24px 26px 80px;max-width:1240px;width:100%}
+main{padding:24px 26px 80px;max-width:1240px;width:100%;margin-inline:auto}
 
 /* ===================== BUTTONS ===================== */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;
@@ -317,7 +317,7 @@ img,svg,canvas{max-width:100%}
 [dir="rtl"] .sidebar{border-right:none;border-left:1px solid var(--border)}
 [dir="rtl"] .nav-btn{text-align:right}
 [dir="rtl"] .auth-link{margin-left:0;margin-right:5px}
-[dir="rtl"] .tx-note,[dir="rtl"] .auth-card h2,[dir="rtl"] .auth-sub{text-align:right}
+[dir="rtl"] .tx-note{text-align:right}
 [dir="rtl"] select.input{background-position:left 12px center;padding-right:12px;padding-left:34px}
 @media(max-width:760px){
   [dir="rtl"] .nav-badge{right:auto;left:18px}
@@ -330,7 +330,8 @@ img,svg,canvas{max-width:100%}
 .auth-overlay[hidden]{display:none}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);
   border-radius:16px;padding:30px 28px;box-shadow:var(--shadow)}
-.auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.auth-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:22px}
+.auth-card h2,.auth-card .auth-sub{text-align:center}
 .auth-card h2{font-size:21px;font-weight:750;letter-spacing:-.01em}
 .auth-sub{color:var(--text-dim);font-size:13.5px;margin-top:3px;margin-bottom:20px}
 .auth-label{display:block;font-size:12px;font-weight:600;color:var(--text-faint);
@@ -354,13 +355,11 @@ img,svg,canvas{max-width:100%}
 <div id="auth-overlay" class="auth-overlay">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="brand-logo">soon</div>
+      <div class="brand-logo">B</div>
       <div>
-        <div class="brand-name">Command Center</div>
+        <div class="brand-name">Budgettr</div>
         <div class="brand-sub">Personal Finance</div>
       </div>
-      <button type="button" class="btn btn-sm btn-ghost" data-action="lang" id="lang-btn-auth"
-              style="margin-inline-start:auto">العربية</button>
     </div>
     <h2 id="auth-title">Welcome back</h2>
     <p id="auth-subtitle" class="auth-sub">Log in to your budget.</p>
@@ -384,18 +383,15 @@ img,svg,canvas{max-width:100%}
 <div class="layout">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-logo">soon</div>
+      <div class="brand-logo">B</div>
       <div>
-        <div class="brand-name">Command Center</div>
+        <div class="brand-name">Budgettr</div>
         <div class="brand-sub">Personal Finance</div>
       </div>
     </div>
     <nav class="nav" id="nav"></nav>
     <div class="sidebar-foot">
       <div class="who" id="who" title="Logged in user"></div>
-      <button class="btn btn-sm btn-ghost" data-action="lang" id="lang-btn-side">العربية</button>
-      <button class="btn btn-sm btn-ghost" data-action="theme"><span id="theme-icon"></span><span id="theme-label">Theme</span></button>
-      <button class="btn btn-sm btn-ghost" data-action="logout" id="logout-btn">Log out</button>
       <div class="app-credit">© AlmotasimKH</div>
     </div>
   </aside>
@@ -404,6 +400,7 @@ img,svg,canvas{max-width:100%}
       <h1 id="page-title">Dashboard</h1>
       <button class="btn btn-sm" data-action="lang" id="lang-btn-top" title="Language">العربية</button>
       <button class="icon-btn" data-action="theme" title="Toggle theme" id="theme-icon-top"></button>
+      <button class="btn btn-sm btn-ghost" data-action="logout" id="logout-btn">Log out</button>
     </div>
     <main id="view"></main>
     <footer class="app-credit app-credit-foot">© AlmotasimKH</footer>
@@ -415,7 +412,7 @@ img,svg,canvas{max-width:100%}
 <script>
 "use strict";
 /* ============================================================
-   Personal Finance Command Center — English/Arabic, no deps.
+   Budgettr — Personal Finance, English/Arabic, no deps.
    Data lives in MySQL per logged-in user (via /api/data).
    Export/import JSON still works for manual backup.
    ============================================================ */
@@ -427,7 +424,10 @@ const CONFIG = { currency: "SAR", storeKey: "pfcc_v1" };
    ============================================================ */
 const STR = {
   en: {
-    brand_name:"Command Center", brand_sub:"Personal Finance",
+    brand_name:"Budgettr", brand_sub:"Personal Finance",
+    cat_c_salary:"Salary", cat_c_free:"Freelance", cat_c_other_in:"Other Income",
+    cat_c_rent:"Rent", cat_c_groc:"Groceries", cat_c_trans:"Transport", cat_c_ent:"Entertainment",
+    cat_c_util:"Utilities", cat_c_dine:"Dining", cat_c_health:"Health", cat_c_shop:"Shopping", cat_c_bills:"Bills",
     nav_dashboard:"Dashboard", nav_transactions:"Transactions", nav_budget:"Budget", nav_bills:"Bills", nav_goals:"Goals",
     data:"Data", backup_data:"Backup & Data", log_out:"Log out",
     light_mode:"Light mode", dark_mode:"Dark mode", signed_in_as:"Signed in as",
@@ -496,7 +496,10 @@ const STR = {
     c_del_cat:"Delete category “{name}”?", bill_prefix:"Bill: "
   },
   ar: {
-    brand_name:"مركز القيادة", brand_sub:"المالية الشخصية",
+    brand_name:"Budgettr", brand_sub:"المالية الشخصية",
+    cat_c_salary:"الراتب", cat_c_free:"عمل حر", cat_c_other_in:"دخل آخر",
+    cat_c_rent:"الإيجار", cat_c_groc:"البقالة", cat_c_trans:"المواصلات", cat_c_ent:"الترفيه",
+    cat_c_util:"الخدمات", cat_c_dine:"المطاعم", cat_c_health:"الصحة", cat_c_shop:"التسوق", cat_c_bills:"الفواتير",
     nav_dashboard:"لوحة التحكم", nav_transactions:"المعاملات", nav_budget:"الميزانية", nav_bills:"الفواتير", nav_goals:"الأهداف",
     data:"البيانات", backup_data:"النسخ الاحتياطي", log_out:"تسجيل الخروج",
     light_mode:"الوضع الفاتح", dark_mode:"الوضع الداكن", signed_in_as:"مسجّل الدخول باسم",
@@ -585,7 +588,7 @@ function applyStaticLang(){
   applyLang();
   document.querySelectorAll(".brand-name").forEach(e=>e.textContent=t("brand_name"));
   document.querySelectorAll(".brand-sub").forEach(e=>e.textContent=t("brand_sub"));
-  ["lang-btn-top","lang-btn-side","lang-btn-auth"].forEach(id=>{const e=document.getElementById(id); if(e) e.textContent=langBtnLabel();});
+  const lt=document.getElementById("lang-btn-top"); if(lt) lt.textContent=langBtnLabel();
   const lo=document.getElementById("logout-btn"); if(lo) lo.textContent=t("log_out");
   const who=document.getElementById("who"); if(who && currentUser) who.innerHTML=t("signed_in_as")+' <b>'+esc(currentUser)+'</b>';
   renderThemeIcons();
@@ -731,6 +734,9 @@ function stepDate(d,freq,dir){
 function addPeriod(iso,freq){ return localISO(stepDate(parseISO(iso),freq,1)); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function catById(id){ return state.categories.find(c=>c.id===id); }
+// Display name for a category: built-in categories (stable ids) translate with
+// the language; custom categories show their stored name as typed.
+function catName(c){ if(!c) return ""; const k="cat_"+c.id, tr=t(k); return tr===k ? (c.name||"") : tr; }
 function ratioClass(r){ return r<0.75?"g":(r<=1?"y":"r"); }
 
 // Append a same-day expense from the quick-entry surfaces. Returns true on success.
@@ -864,7 +870,7 @@ function render(){
 function quickAddBar(){
   const cats=state.categories.filter(c=>c.type==="expense");
   if(!ui.qaCat||!cats.some(c=>c.id===ui.qaCat)) ui.qaCat=firstExpenseCat();
-  const opts=cats.map(c=>`<option value="${c.id}"${c.id===ui.qaCat?" selected":""}>${esc(c.name)}</option>`).join("");
+  const opts=cats.map(c=>`<option value="${c.id}"${c.id===ui.qaCat?" selected":""}>${esc(catName(c))}</option>`).join("");
   return `<div class="qadd qadd-desktop">
       <span class="qadd-cur">${CONFIG.currency}</span>
       <input id="qa-amount" class="input qadd-amt" type="number" min="0" step="0.01" inputmode="decimal"
@@ -877,7 +883,7 @@ function quickAddBar(){
 function quickGridModal(){
   const tiles=state.categories.filter(c=>c.type==="expense").map(c=>
     `<button type="button" class="qtile" style="background:${c.color}" data-action="qgrid-pick" data-id="${c.id}">
-       <span class="qtile-dot"></span>${esc(c.name)}</button>`).join("");
+       <span class="qtile-dot"></span>${esc(catName(c))}</button>`).join("");
   showModal(`<div class="modal">
     <div class="modal-head"><h2>${t('add_expense')}</h2><button class="icon-btn" data-action="close">${I.x}</button></div>
     <div class="modal-body"><div class="qgrid">${tiles}</div></div></div>`);
@@ -885,7 +891,7 @@ function quickGridModal(){
 function quickAmountModal(catId){
   const c=catById(catId)||{name:t('uncategorized'),color:"#637385"};
   showModal(`<form class="modal" data-action="save-qadd" data-id="${catId}">
-    <div class="modal-head"><h2><span class="dot" style="background:${c.color}"></span> ${esc(c.name)}</h2>
+    <div class="modal-head"><h2><span class="dot" style="background:${c.color}"></span> ${esc(catName(c))}</h2>
       <button type="button" class="icon-btn" data-action="close">${I.x}</button></div>
     <div class="modal-body">
       <div class="field"><label>${t('amount_cur',{c:CONFIG.currency})}</label>
@@ -917,7 +923,7 @@ function budgetSnapshot(mk){
        <div class="small faint">${t('left_to_spend',{x:fmt(budget)})}</div>`
     : `<div class="snap-big faint">${fmtShort(spentTotal)}</div><div class="small faint">${t('spent_this_month')}</div>`;
   const bars = rows.length ? rows.map(r=>`<div class="snap-row">
-      <div class="between small"><span class="fw7"><span class="dot" style="background:${r.c.color}"></span> ${esc(r.c.name)}</span>
+      <div class="between small"><span class="fw7"><span class="dot" style="background:${r.c.color}"></span> ${esc(catName(r.c))}</span>
         <span class="tnum muted">${fmt(r.spent)} / ${fmt(r.b)}</span></div>
       <div class="bar mt8"><div class="bar-fill fill-${r.cls}" style="width:${(Math.min(r.r,1)*100).toFixed(1)}%"></div></div>
     </div>`).join("")
@@ -1045,7 +1051,7 @@ function donutSeg(cx,cy,rO,rI,start,end){
 function donutChart(mk){
   const data = state.categories
     .filter(c=>c.type==="expense")
-    .map(c=>({name:c.name,color:c.color,val:catSpend(c.id,mk)}))
+    .map(c=>({name:catName(c),color:c.color,val:catSpend(c.id,mk)}))
     .filter(d=>d.val>0)
     .sort((a,b)=>b.val-a.val);
   const total = data.reduce((s,d)=>s+d.val,0);
@@ -1123,7 +1129,7 @@ function viewTransactions(){
   const monthOpts = `<option value="all"${ui.txMonth==="all"?" selected":""}>${t('all_months')}</option>`+
     availableMonths().map(m=>`<option value="${m}"${ui.txMonth===m?" selected":""}>${monthLabel(m)}</option>`).join("");
   const catOpts = `<option value="all"${ui.txCat==="all"?" selected":""}>${t('all_categories')}</option>`+
-    state.categories.map(c=>`<option value="${c.id}"${ui.txCat===c.id?" selected":""}>${esc(c.name)}</option>`).join("");
+    state.categories.map(c=>`<option value="${c.id}"${ui.txCat===c.id?" selected":""}>${esc(catName(c))}</option>`).join("");
 
   const rows = list.length? list.map(tx=>{
     const c=catById(tx.categoryId)||{name:t('uncategorized'),color:"#637385"};
@@ -1132,7 +1138,7 @@ function viewTransactions(){
     return `<div class="tx-row">
       <span class="dot" style="background:${c.color}"></span>
       <div class="tx-main">
-        <div class="tx-cat">${esc(c.name)}</div>
+        <div class="tx-cat">${esc(catName(c))}</div>
         ${tx.note?`<div class="tx-note">${esc(tx.note)}</div>`:""}
       </div>
       <div class="tx-date">${fmtDate(tx.date)}</div>
@@ -1194,7 +1200,7 @@ function viewBudget(){
     const rem=b-s;
     const remTxt = rem>=0 ? `<span class="muted">${t('x_left',{x:fmt(rem)})}</span>` : `<span class="txt-r fw7">${t('x_over',{x:fmt(-rem)})}</span>`;
     return `<div style="margin-bottom:18px">
-      <div class="between mb8"><span class="flex"><span class="dot" style="background:${c.color}"></span><b>${esc(c.name)}</b></span>
+      <div class="between mb8"><span class="flex"><span class="dot" style="background:${c.color}"></span><b>${esc(catName(c))}</b></span>
         <span class="tnum fw7">${fmt(b)}</span></div>
       <div class="bar"><div class="bar-fill fill-${cc}" style="width:${Math.min(r*100,100).toFixed(1)}%"></div></div>
       <div class="between small mt8"><span class="tnum muted">${fmt(s)} spent</span>
@@ -1300,7 +1306,7 @@ function viewBills(){
     return `<div class="tx-row">
       <div class="tx-main">
         <div class="tx-cat">${esc(b.name)} ${pill}</div>
-        <div class="tx-note">${rec} · ${fmtDate(b.dueDate)}${c?` · ${esc(c.name)}`:""}${paidCount?` · ${t('paid_n_times',{n:paidCount})}`:""}</div>
+        <div class="tx-note">${rec} · ${fmtDate(b.dueDate)}${c?` · ${esc(catName(c))}`:""}${paidCount?` · ${t('paid_n_times',{n:paidCount})}`:""}</div>
       </div>
       <div class="tx-amt">${fmt(b.amount)}</div>
       <div class="row-actions">
@@ -1390,7 +1396,7 @@ function txModal(tx){
   const editing=!!tx;
   const type=tx?tx.type:"expense";
   const cats=state.categories.filter(c=>c.type===type);
-  const catOpts=cats.map(c=>`<option value="${c.id}"${tx&&tx.categoryId===c.id?" selected":""}>${esc(c.name)}</option>`).join("");
+  const catOpts=cats.map(c=>`<option value="${c.id}"${tx&&tx.categoryId===c.id?" selected":""}>${esc(catName(c))}</option>`).join("");
   showModal(`<form class="modal" data-action="save-tx" data-id="${tx?tx.id:""}">
     <div class="modal-head"><h2>${editing?t('edit'):t('add')} ${t('transaction')}</h2><button type="button" class="icon-btn" data-action="close">${I.x}</button></div>
     <div class="modal-body">
@@ -1421,14 +1427,14 @@ function txModal(tx){
 function refreshTxCats(type){
   const sel=document.getElementById("tx-cat"); if(!sel) return;
   const cats=state.categories.filter(c=>c.type===type);
-  sel.innerHTML=cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  sel.innerHTML=cats.map(c=>`<option value="${c.id}">${esc(catName(c))}</option>`).join("");
 }
 
 /* ---- category manager ---- */
 function catManagerModal(){
   const rows=state.categories.map(c=>`<div class="tx-row">
     <span class="dot" style="background:${c.color}"></span>
-    <div class="tx-main"><div class="tx-cat">${esc(c.name)}</div>
+    <div class="tx-main"><div class="tx-cat">${esc(catName(c))}</div>
       <div class="tx-note">${c.type==="income"?t('income'):t('expense')}</div></div>
     <div class="row-actions">
       <button class="icon-btn" data-action="edit-cat" data-id="${c.id}" title="${t('edit')}">${I.edit}</button>
@@ -1464,7 +1470,7 @@ function catEditModal(cat){
 function billModal(b){
   const editing=!!b;
   const cats=state.categories.filter(c=>c.type==="expense");
-  const catOpts=cats.map(c=>`<option value="${c.id}"${b&&b.categoryId===c.id?" selected":(!b&&c.id==='c_bills'?" selected":"")}>${esc(c.name)}</option>`).join("");
+  const catOpts=cats.map(c=>`<option value="${c.id}"${b&&b.categoryId===c.id?" selected":(!b&&c.id==='c_bills'?" selected":"")}>${esc(catName(c))}</option>`).join("");
   const rec=b?b.recurring:"monthly";
   const recOpt=(v,l)=>`<option value="${v}"${rec===v?" selected":""}>${l}</option>`;
   showModal(`<form class="modal" data-action="save-bill" data-id="${b?b.id:""}">
@@ -1523,7 +1529,7 @@ function budgetModal(){
   const b=state.settings.monthlyBudget||0;
   const catRows=state.categories.filter(c=>c.type==="expense").map(c=>{
     const v=state.settings.categoryBudgets[c.id]||"";
-    return `<div class="field"><label><span class="dot" style="background:${c.color};display:inline-block;margin-right:6px"></span>${esc(c.name)}</label>
+    return `<div class="field"><label><span class="dot" style="background:${c.color};display:inline-block;margin-right:6px"></span>${esc(catName(c))}</label>
       <input class="input" type="number" min="0" step="0.01" data-cat-budget="${c.id}" value="${v}" placeholder="0.00"></div>`;
   }).join("");
   showModal(`<form class="modal modal-wide" data-action="save-budgets">
