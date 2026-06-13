@@ -5,3 +5,4 @@ node_modules/
 .mcp.json
 budget-deploy.tgz
 .gstack/
+.superpowers/
