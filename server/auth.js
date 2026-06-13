@@ -34,35 +34,35 @@ router.post("/signup", authLimiter, async (req, res) => {
   const v = validateCredentials(req.body || {});
   if (!v.ok) return res.status(400).json({ error: v.error });
 
-  const client = await pool.connect();
+  const client = await pool.getConnection();
   try {
-    await client.query("BEGIN");
+    await client.beginTransaction();
 
-    const exists = await client.query("SELECT 1 FROM users WHERE username = $1", [v.username]);
-    if (exists.rowCount > 0) {
-      await client.query("ROLLBACK");
+    const [existing] = await client.query("SELECT 1 FROM users WHERE username = ?", [v.username]);
+    if (existing.length > 0) {
+      await client.rollback();
       return res.status(409).json({ error: "That username is already taken." });
     }
 
     const hash = await bcrypt.hash(v.password, BCRYPT_COST);
-    const inserted = await client.query(
-      "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id",
+    const [inserted] = await client.query(
+      "INSERT INTO users (username, password_hash) VALUES (?, ?)",
       [v.username, hash]
     );
-    const userId = inserted.rows[0].id;
+    const userId = inserted.insertId;
 
     await client.query(
-      "INSERT INTO budgets (user_id, state) VALUES ($1, $2)",
+      "INSERT INTO budgets (user_id, state) VALUES (?, ?)",
       [userId, JSON.stringify(defaultData())]
     );
 
-    await client.query("COMMIT");
+    await client.commit();
 
     req.session.userId = userId;
     req.session.username = v.username;
     return res.status(201).json({ username: v.username });
   } catch (err) {
-    await client.query("ROLLBACK").catch(() => {});
+    await client.rollback().catch(() => {});
     console.error("signup error:", err);
     return res.status(500).json({ error: "Could not create account." });
   } finally {
@@ -77,17 +77,17 @@ router.post("/login", authLimiter, async (req, res) => {
   if (!v.ok) return res.status(401).json({ error: "Invalid username or password." });
 
   try {
-    const result = await pool.query(
-      "SELECT id, password_hash FROM users WHERE username = $1",
+    const [rows] = await pool.query(
+      "SELECT id, password_hash FROM users WHERE username = ?",
       [v.username]
     );
-    if (result.rowCount === 0) {
+    if (rows.length === 0) {
       // Run a dummy compare to keep timing roughly constant.
       await bcrypt.compare(v.password, "$2b$12$" + "x".repeat(53));
       return res.status(401).json({ error: "Invalid username or password." });
     }
 
-    const user = result.rows[0];
+    const user = rows[0];
     const match = await bcrypt.compare(v.password, user.password_hash);
     if (!match) return res.status(401).json({ error: "Invalid username or password." });
 

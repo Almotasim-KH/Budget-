@@ -13,20 +13,22 @@ router.use(requireAuth);
 // GET /api/data — return the logged-in user's finance state.
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT state FROM budgets WHERE user_id = $1",
+    const [rows] = await pool.query(
+      "SELECT state FROM budgets WHERE user_id = ?",
       [req.session.userId]
     );
-    if (result.rowCount === 0) {
+    if (rows.length === 0) {
       // Self-heal: a user with no budget row gets fresh defaults.
       const state = defaultData();
       await pool.query(
-        "INSERT INTO budgets (user_id, state) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING",
+        "INSERT IGNORE INTO budgets (user_id, state) VALUES (?, ?)",
         [req.session.userId, JSON.stringify(state)]
       );
       return res.json(state);
     }
-    return res.json(result.rows[0].state);
+    // MySQL returns JSON columns as objects; MariaDB returns them as strings.
+    const raw = rows[0].state;
+    return res.json(typeof raw === "string" ? JSON.parse(raw) : raw);
   } catch (err) {
     console.error("GET /api/data error:", err);
     return res.status(500).json({ error: "Could not load your data." });
@@ -45,9 +47,8 @@ router.put("/", async (req, res) => {
   try {
     await pool.query(
       `INSERT INTO budgets (user_id, state, updated_at)
-       VALUES ($1, $2, now())
-       ON CONFLICT (user_id)
-       DO UPDATE SET state = EXCLUDED.state, updated_at = now()`,
+       VALUES (?, ?, NOW())
+       ON DUPLICATE KEY UPDATE state = VALUES(state), updated_at = NOW()`,
       [req.session.userId, JSON.stringify(state)]
     );
     return res.json({ ok: true });

@@ -3,9 +3,9 @@
 const path = require("path");
 const express = require("express");
 const session = require("express-session");
-const PgSession = require("connect-pg-simple")(session);
+const MySQLStore = require("express-mysql-session")(session);
 
-const { pool } = require("./db");
+const { sessionPool } = require("./db");
 const { router: authRouter } = require("./auth");
 const dataRouter = require("./data");
 
@@ -23,7 +23,7 @@ function buildApp() {
 
   app.use(
     session({
-      store: new PgSession({ pool, tableName: "session", createTableIfMissing: true }),
+      store: new MySQLStore({ createDatabaseTable: true }, sessionPool),
       secret: process.env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,

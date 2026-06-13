@@ -8,16 +8,17 @@ const { buildApp } = require("./app");
 const PORT = process.env.PORT || 3000;
 
 async function start() {
+  // Listen first so a transient DB hiccup at boot doesn't take the site down.
+  const app = buildApp();
+  app.listen(PORT, () => {
+    console.log(`Budget app listening on port ${PORT}`);
+  });
+
   try {
     await initSchema();
-    const app = buildApp();
-    app.listen(PORT, () => {
-      console.log(`Budget app running at http://localhost:${PORT}`);
-    });
+    console.log("Schema ready.");
   } catch (err) {
-    console.error("Failed to start — is PostgreSQL running and DATABASE_URL correct?");
-    console.error(err.message);
-    process.exit(1);
+    console.error("initSchema failed:", err.message);
   }
 }
 

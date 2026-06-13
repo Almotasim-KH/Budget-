@@ -1,16 +1,19 @@
 # Budget — Finance Command Center
 
 A personal finance web app with **self-signup login** and **per-user storage in
-PostgreSQL**. Each user logs in with a username + password and sees only their
+MySQL**. Each user logs in with a username + password and sees only their
 own transactions, budgets, bills, and goals.
+
+**Live:** https://budgettr.com (deployed on Hostinger).
 
 ## Stack
 
 - **Frontend:** single `index.html` (vanilla JS, no build step)
 - **Backend:** Node.js + Express
-- **Auth:** bcrypt-hashed passwords, server-side sessions (stored in Postgres)
-- **Database:** PostgreSQL `Budgets` — tables `users`, `budgets` (JSONB per
-  user), `session`
+- **Auth:** bcrypt-hashed passwords, server-side sessions (stored in MySQL via
+  `express-mysql-session`)
+- **Database:** MySQL/MariaDB — tables `users`, `budgets` (JSON state per
+  user), `sessions`
 
 ## Setup
 
@@ -22,8 +25,8 @@ own transactions, budgets, bills, and goals.
    ```
    copy .env.example .env
    ```
-   Edit `.env` and set `DATABASE_URL` (your Postgres password) and a
-   `SESSION_SECRET`. The `Budgets` database must already exist.
+   Edit `.env` and set `DATABASE_URL` (a `mysql://` URI) and a
+   `SESSION_SECRET`. The MySQL database must already exist.
 
 ## Run
 
@@ -37,7 +40,7 @@ created on first start.
 
 ## Test
 
-End-to-end API tests (needs a running PostgreSQL with `.env` configured):
+End-to-end API tests (needs a running MySQL with `.env` configured):
 
 ```
 npm test
@@ -51,9 +54,9 @@ failure cases (401 unauthenticated, 409 duplicate username, weak password).
 ```
 index.html          the app (login overlay + finance UI)
 server/
-  index.js          startup: init schema, listen
+  index.js          startup: listen, then init schema
   app.js            Express app factory (routes, sessions, static)
-  db.js             pg pool + table bootstrap
+  db.js             mysql2 pool + table bootstrap
   auth.js           signup / login / logout / me
   data.js           GET/PUT the logged-in user's data
   validate.js       username/password rules
