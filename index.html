@@ -61,7 +61,9 @@ a{color:var(--accent)}
 
 .content{flex:1;min-width:0;display:flex;flex-direction:column}
 .topbar{display:flex;align-items:center;gap:14px;padding:16px 26px;border-bottom:1px solid var(--border);
-  background:var(--bg);position:sticky;top:0;z-index:20;flex-wrap:wrap}
+  background:var(--bg);position:sticky;top:0;z-index:20;flex-wrap:wrap;
+  transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.topbar.nav-hidden{transform:translateY(-105%)}
 .topbar h1{font-size:20px;font-weight:700;margin-right:auto}
 main{padding:24px 26px 80px;max-width:1240px;width:100%;margin-inline:auto}
 
@@ -1597,7 +1599,7 @@ document.addEventListener("click",e=>{
   if(a==="logout"){ logout(); return; }
 
   // nav & theme
-  if(a==="nav"){ ui.view=el.dataset.view; render(); window.scrollTo(0,0); document.querySelector(".sidebar").classList.remove("nav-hidden"); return; }
+  if(a==="nav"){ ui.view=el.dataset.view; render(); window.scrollTo(0,0); document.querySelectorAll(".sidebar,.topbar").forEach(b=>b.classList.remove("nav-hidden")); return; }
   if(a==="theme"){ state.settings.theme=state.settings.theme==="dark"?"light":"dark"; commit(); return; }
   if(a==="lang"){ setLang(curLang()==="ar"?"en":"ar"); return; }
   if(a==="auth-mode"){ setAuthMode(el.dataset.mode); return; }
@@ -1886,17 +1888,17 @@ async function logout(){
   showAuth();
 }
 
-/* ---------- mobile nav: hide on scroll down, reveal on scroll up ---------- */
+/* ---------- chrome: hide top bar + bottom nav on scroll down, reveal on up ---------- */
 (function(){
-  const sb=document.querySelector(".sidebar");
-  if(!sb) return;
+  const bars=[document.querySelector(".sidebar"),document.querySelector(".topbar")].filter(Boolean);
+  if(!bars.length) return;
   let lastY=window.scrollY||0, ticking=false;
+  function setHidden(on){ bars.forEach(b=>b.classList.toggle("nav-hidden",on)); }
   function update(){
     const y=window.scrollY||0, dy=y-lastY;
     if(Math.abs(dy)>6){
       // Hide only while scrolling down past the top; any up-scroll brings it back.
-      if(dy>0 && y>64) sb.classList.add("nav-hidden");
-      else sb.classList.remove("nav-hidden");
+      setHidden(dy>0 && y>64);
       lastY=y;
     }
     ticking=false;
