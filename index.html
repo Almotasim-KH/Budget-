@@ -316,7 +316,6 @@ img,svg,canvas{max-width:100%}
 [dir="rtl"] .stat-accent{left:auto;right:0}
 [dir="rtl"] .sidebar{border-right:none;border-left:1px solid var(--border)}
 [dir="rtl"] .nav-btn{text-align:right}
-[dir="rtl"] .auth-link{margin-left:0;margin-right:5px}
 [dir="rtl"] .tx-note{text-align:right}
 [dir="rtl"] select.input{background-position:left 12px center;padding-right:12px;padding-left:34px}
 @media(max-width:760px){
@@ -330,6 +329,12 @@ img,svg,canvas{max-width:100%}
 .auth-overlay[hidden]{display:none}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);
   border-radius:16px;padding:30px 28px;box-shadow:var(--shadow)}
+.auth-tabs{display:flex;gap:6px;background:var(--surface-2);border:1px solid var(--border);
+  border-radius:12px;padding:5px;margin-bottom:22px}
+.auth-tab{flex:1;padding:10px;border-radius:9px;font-weight:600;font-size:14px;color:var(--text-dim);
+  background:transparent;border:none;transition:.15s;cursor:pointer}
+.auth-tab:hover{color:var(--text)}
+.auth-tab.on{background:var(--accent);color:#fff}
 .auth-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:22px}
 .auth-card h2,.auth-card .auth-sub{text-align:center}
 .auth-card h2{font-size:21px;font-weight:750;letter-spacing:-.01em}
@@ -342,8 +347,6 @@ img,svg,canvas{max-width:100%}
 .auth-submit{width:100%;justify-content:center;margin-top:20px;padding:11px}
 .auth-error{margin-top:14px;padding:9px 12px;border-radius:9px;font-size:13px;
   background:var(--red-soft);color:var(--red);border:1px solid var(--red)}
-.auth-toggle{margin-top:18px;text-align:center;font-size:13.5px;color:var(--text-dim)}
-.auth-link{color:var(--accent);font-weight:600;text-decoration:underline;margin-left:5px}
 .who{font-size:12px;color:var(--text-dim);padding:4px 6px 8px;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
 .who b{color:var(--text);font-weight:650}
@@ -354,6 +357,10 @@ img,svg,canvas{max-width:100%}
 <!-- ===================== AUTH OVERLAY ===================== -->
 <div id="auth-overlay" class="auth-overlay">
   <div class="auth-card">
+    <div class="auth-tabs">
+      <button type="button" id="tab-login" class="auth-tab on" data-action="auth-mode" data-mode="login">Log in</button>
+      <button type="button" id="tab-signup" class="auth-tab" data-action="auth-mode" data-mode="signup">Create account</button>
+    </div>
     <div class="auth-brand">
       <div class="brand-logo">B</div>
       <div>
@@ -365,18 +372,14 @@ img,svg,canvas{max-width:100%}
     <p id="auth-subtitle" class="auth-sub">Log in to your budget.</p>
     <form id="auth-form" autocomplete="on">
       <label class="auth-label" for="auth-username" id="auth-username-label">Username</label>
-      <input id="auth-username" class="auth-input" type="text" name="username"
+      <input id="auth-username" class="auth-input" type="text" name="username" placeholder="Enter your username"
              autocomplete="username" autocapitalize="none" spellcheck="false" required>
       <label class="auth-label" for="auth-password" id="auth-password-label">Password</label>
-      <input id="auth-password" class="auth-input" type="password" name="password"
+      <input id="auth-password" class="auth-input" type="password" name="password" placeholder="Enter your password"
              autocomplete="current-password" required>
       <div id="auth-error" class="auth-error" hidden></div>
       <button id="auth-submit" class="btn btn-primary auth-submit" type="submit">Log in</button>
     </form>
-    <div class="auth-toggle">
-      <span id="auth-toggle-text">New here?</span>
-      <button type="button" id="auth-toggle-btn" class="auth-link">Create an account</button>
-    </div>
   </div>
 </div>
 
@@ -434,6 +437,7 @@ const STR = {
     auth_welcome:"Welcome back", auth_create:"Create your account",
     auth_login_sub:"Log in to your budget.", auth_signup_sub:"Pick a username and password.",
     username:"Username", password:"Password", login:"Log in", signup:"Sign up",
+    enter_username:"Enter your username", enter_password:"Enter your password", tab_signup:"Create account",
     new_here:"New here?", create_account:"Create an account",
     have_account:"Already have an account?", login_instead:"Log in instead",
     enter_user_pass:"Enter a username and password.", something_wrong:"Something went wrong.",
@@ -507,6 +511,7 @@ const STR = {
     auth_welcome:"مرحبًا بعودتك", auth_create:"أنشئ حسابك",
     auth_login_sub:"سجّل الدخول إلى ميزانيتك.", auth_signup_sub:"اختر اسم مستخدم وكلمة مرور.",
     username:"اسم المستخدم", password:"كلمة المرور", login:"تسجيل الدخول", signup:"إنشاء حساب",
+    enter_username:"أدخل اسم المستخدم", enter_password:"أدخل كلمة المرور", tab_signup:"إنشاء حساب",
     new_here:"مستخدم جديد؟", create_account:"أنشئ حسابًا",
     have_account:"لديك حساب بالفعل؟", login_instead:"سجّل الدخول بدلاً من ذلك",
     enter_user_pass:"أدخل اسم المستخدم وكلمة المرور.", something_wrong:"حدث خطأ ما.",
@@ -599,6 +604,10 @@ function applyStaticLang(){
 function applyAuthLang(){
   const ul=document.getElementById("auth-username-label"); if(ul) ul.textContent=t("username");
   const pl=document.getElementById("auth-password-label"); if(pl) pl.textContent=t("password");
+  const ui_=document.getElementById("auth-username"); if(ui_) ui_.placeholder=t("enter_username");
+  const pi=document.getElementById("auth-password"); if(pi) pi.placeholder=t("enter_password");
+  const tl=document.getElementById("tab-login"); if(tl) tl.textContent=t("login");
+  const ts=document.getElementById("tab-signup"); if(ts) ts.textContent=t("tab_signup");
   if(typeof authMode!=="undefined" && document.getElementById("auth-title")) setAuthMode(authMode);
 }
 function setLang(l){
@@ -1573,6 +1582,7 @@ document.addEventListener("click",e=>{
   if(a==="nav"){ ui.view=el.dataset.view; render(); return; }
   if(a==="theme"){ state.settings.theme=state.settings.theme==="dark"?"light":"dark"; commit(); return; }
   if(a==="lang"){ setLang(curLang()==="ar"?"en":"ar"); return; }
+  if(a==="auth-mode"){ setAuthMode(el.dataset.mode); return; }
 
   // quick add
   if(a==="qadd"){
@@ -1768,9 +1778,7 @@ const $auth = {
   err:()=>document.getElementById("auth-error"),
   submit:()=>document.getElementById("auth-submit"),
   title:()=>document.getElementById("auth-title"),
-  subtitle:()=>document.getElementById("auth-subtitle"),
-  toggleText:()=>document.getElementById("auth-toggle-text"),
-  toggleBtn:()=>document.getElementById("auth-toggle-btn")
+  subtitle:()=>document.getElementById("auth-subtitle")
 };
 
 function showAuth(){
@@ -1791,8 +1799,9 @@ function setAuthMode(mode){
   $auth.title().textContent   = login ? t("auth_welcome") : t("auth_create");
   $auth.subtitle().textContent= login ? t("auth_login_sub") : t("auth_signup_sub");
   $auth.submit().textContent  = login ? t("login") : t("signup");
-  $auth.toggleText().textContent = login ? t("new_here") : t("have_account");
-  $auth.toggleBtn().textContent  = login ? t("create_account") : t("login_instead");
+  const tl=document.getElementById("tab-login"), ts=document.getElementById("tab-signup");
+  if(tl) tl.classList.toggle("on", login);
+  if(ts) ts.classList.toggle("on", !login);
   $auth.pass().setAttribute("autocomplete", login ? "current-password" : "new-password");
   authError("");
 }
@@ -1841,7 +1850,6 @@ async function logout(){
 /* ---------- boot ---------- */
 (async function init(){
   $auth.form().addEventListener("submit", submitAuth);
-  $auth.toggleBtn().addEventListener("click", ()=> setAuthMode(authMode==="login"?"signup":"login"));
   setAuthMode("login");
   applyStaticLang();
   try{
