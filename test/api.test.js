@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * End-to-end API tests. Requires a running PostgreSQL with DATABASE_URL set
+ * End-to-end API tests. Requires a running MySQL with DATABASE_URL set
  * (see .env). Creates two throwaway users with unique names, so it can be run
  * repeatedly without cleanup.
  *
@@ -10,6 +10,12 @@
 
 const { test, before, after } = require("node:test");
 const assert = require("node:assert");
+
+// Force a non-production env BEFORE loading config/app: production turns on
+// Secure-only session cookies, which are never set over the test's plain-HTTP
+// connection, breaking every test that depends on a persisted login session.
+// dotenv.config() does not override an already-set variable, so this wins.
+process.env.NODE_ENV = "test";
 
 require("dotenv").config();
 
@@ -54,7 +60,7 @@ after(async () => {
   if (server) await new Promise((r) => server.close(r));
   const { pool } = require("../server/db");
   // Clean up the throwaway users (cascade removes their budgets).
-  await pool.query("DELETE FROM users WHERE username = ANY($1)", [[userA, userB]]);
+  await pool.query("DELETE FROM users WHERE username IN (?)", [[userA, userB]]);
   await pool.end();
 });
 
