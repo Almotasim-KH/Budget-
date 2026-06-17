@@ -363,7 +363,7 @@ img,svg,canvas{max-width:100%}
 <body>
 
 <!-- ===================== AUTH OVERLAY ===================== -->
-<div id="auth-overlay" class="auth-overlay">
+<div id="auth-overlay" class="auth-overlay" hidden>
   <div class="auth-card">
     <div class="auth-tabs">
       <span class="auth-tab-indicator" id="auth-tab-indicator"></span>
@@ -389,6 +389,7 @@ img,svg,canvas{max-width:100%}
       <div id="auth-error" class="auth-error" hidden></div>
       <button id="auth-submit" class="btn btn-primary auth-submit" type="submit">Log in</button>
     </form>
+    <button type="button" id="auth-guest-link" class="btn btn-ghost btn-sm auth-guest" data-action="dismiss-auth">Continue as guest</button>
   </div>
 </div>
 
@@ -412,7 +413,7 @@ img,svg,canvas{max-width:100%}
       <h1 id="page-title">Dashboard</h1>
       <button class="btn btn-sm" data-action="lang" id="lang-btn-top" title="Language">العربية</button>
       <button class="icon-btn" data-action="theme" title="Toggle theme" id="theme-icon-top"></button>
-      <button class="btn btn-sm btn-ghost" data-action="logout" id="logout-btn">Log out</button>
+      <button class="btn btn-sm btn-ghost" data-action="account" id="logout-btn">Log out</button>
     </div>
     <main id="view"></main>
     <footer class="app-credit app-credit-foot">© AlmotasimKH</footer>
@@ -448,6 +449,10 @@ const STR = {
     enter_username:"Enter your username", enter_password:"Enter your password", tab_signup:"Create account",
     new_here:"New here?", create_account:"Create an account",
     have_account:"Already have an account?", login_instead:"Log in instead",
+    sign_in:"Sign in", guest:"Guest", continue_guest:"Continue as guest",
+    nudge_title:"Save your budget?",
+    nudge_body:"You're using Budgettr as a guest — your data will disappear if you refresh or close the page. Create a free account to keep it.",
+    nudge_create:"Create account", nudge_guest:"Continue as guest",
     enter_user_pass:"Enter a username and password.", something_wrong:"Something went wrong.",
     cannot_reach:"Could not reach the server. Is it running?", could_not_load:"Could not load your data.",
     income:"Income", expenses:"Expenses", remaining_budget:"Remaining Budget",
@@ -514,6 +519,10 @@ const STR = {
     enter_username:"أدخل اسم المستخدم", enter_password:"أدخل كلمة المرور", tab_signup:"إنشاء حساب",
     new_here:"مستخدم جديد؟", create_account:"أنشئ حسابًا",
     have_account:"لديك حساب بالفعل؟", login_instead:"سجّل الدخول بدلاً من ذلك",
+    sign_in:"تسجيل الدخول", guest:"زائر", continue_guest:"المتابعة كزائر",
+    nudge_title:"هل تريد حفظ ميزانيتك؟",
+    nudge_body:"أنت تستخدم Budgettr كزائر — ستختفي بياناتك إذا أعدت تحميل الصفحة أو أغلقتها. أنشئ حسابًا مجانيًا للاحتفاظ بها.",
+    nudge_create:"إنشاء حساب", nudge_guest:"المتابعة كزائر",
     enter_user_pass:"أدخل اسم المستخدم وكلمة المرور.", something_wrong:"حدث خطأ ما.",
     cannot_reach:"تعذّر الوصول إلى الخادم. هل هو يعمل؟", could_not_load:"تعذّر تحميل بياناتك.",
     income:"الدخل", expenses:"المصروفات", remaining_budget:"الميزانية المتبقية",
@@ -588,8 +597,9 @@ function applyStaticLang(){
   document.querySelectorAll(".brand-name").forEach(e=>e.textContent=t("brand_name"));
   document.querySelectorAll(".brand-sub").forEach(e=>e.textContent=t("brand_sub"));
   const lt=document.getElementById("lang-btn-top"); if(lt) lt.textContent=langBtnLabel();
-  const lo=document.getElementById("logout-btn"); if(lo) lo.textContent=t("log_out");
-  const who=document.getElementById("who"); if(who && currentUser) who.innerHTML=t("signed_in_as")+' <b>'+esc(currentUser)+'</b>';
+  const lo=document.getElementById("logout-btn"); if(lo) lo.textContent = currentUser ? t("log_out") : t("sign_in");
+  const who=document.getElementById("who"); if(who) who.innerHTML = currentUser ? t("signed_in_as")+' <b>'+esc(currentUser)+'</b>' : t("guest");
+  const gl=document.getElementById("auth-guest-link"); if(gl) gl.textContent=t("continue_guest");
   renderThemeIcons();
   applyAuthLang();
 }
@@ -676,6 +686,7 @@ function normalize(d){
 /* Debounced save to the server. Rapid edits collapse into one PUT. */
 let _saveTimer=null, _savePending=false;
 function save(){
+  if(!currentUser) return; // guest: data lives in memory only, never persisted
   _savePending=true;
   if(_saveTimer) clearTimeout(_saveTimer);
   _saveTimer=setTimeout(flushSave, 600);
@@ -1596,7 +1607,10 @@ document.addEventListener("click",e=>{
   // backdrop / close
   if(a==="backdrop"&&e.target===el){ closeModal(); return; }
   if(a==="close"){ closeModal(); return; }
-  if(a==="logout"){ logout(); return; }
+  if(a==="account"){ if(currentUser) logout(); else { setAuthMode("login"); showAuth(); } return; }
+  if(a==="dismiss-auth"){ hideAuth(); return; }
+  if(a==="nudge-create"){ closeModal(); setAuthMode("signup"); showAuth(); return; }
+  if(a==="nudge-guest"){ closeModal(); return; }
 
   // nav & theme
   if(a==="nav"){ ui.view=el.dataset.view; render(); window.scrollTo(0,0); document.querySelectorAll(".sidebar,.topbar").forEach(b=>b.classList.remove("nav-hidden")); return; }
@@ -1861,7 +1875,8 @@ async function submitAuth(e){
     });
     const data=await res.json().catch(()=>({}));
     if(!res.ok){ authError(data.error||t("something_wrong")); return; }
-    await enterApp(data.username);
+    if(authMode==="signup"){ await enterAfterSignup(data.username); }
+    else { await enterApp(data.username); }
   }catch(err){
     authError(t("cannot_reach"));
   }finally{
@@ -1880,12 +1895,43 @@ async function enterApp(username){
   render();
 }
 
+// Land a brand-new account on the data the user built up as a guest. The
+// in-memory `state` is kept (not reloaded from the server) and pushed up so the
+// freshly-seeded default budget is replaced with their actual work.
+async function enterAfterSignup(username){
+  currentUser=username;
+  hideAuth();
+  applyStaticLang();
+  render();
+  save();            // now enabled (currentUser set) — marks the guest state dirty
+  await flushSave(); // persist it to the new account immediately
+}
+
+// Use the app without an account: data lives only in memory and is gone on
+// refresh. Pass showNudge=true to invite the visitor to create an account.
+function enterGuest(showNudge){
+  state=normalize(defaultData());
+  currentUser="";
+  hideAuth();
+  applyStaticLang();
+  render();
+  if(showNudge) showSignupNudge();
+}
+
+function showSignupNudge(){
+  showModal(`<div class="modal">
+    <div class="modal-head"><h2>${t('nudge_title')}</h2><button type="button" class="icon-btn" data-action="nudge-guest">${I.x}</button></div>
+    <div class="modal-body"><p>${t('nudge_body')}</p></div>
+    <div class="modal-foot">
+      <button type="button" class="btn" data-action="nudge-guest">${t('nudge_guest')}</button>
+      <button type="button" class="btn btn-primary" data-action="nudge-create">${t('nudge_create')}</button>
+    </div></div>`);
+}
+
 async function logout(){
   if(_savePending) await flushSave();
   try{ await fetch("/api/auth/logout",{method:"POST"}); }catch(e){}
-  state=defaultData(); currentUser="";
-  applyStaticLang();
-  showAuth();
+  enterGuest(false); // drop back to a fresh guest session (no nag popup)
 }
 
 /* ---------- chrome: hide top bar + bottom nav on scroll down, reveal on up ---------- */
@@ -1919,10 +1965,9 @@ async function logout(){
   try{
     const me=await fetch("/api/auth/me");
     if(me.ok){ const u=await me.json(); await enterApp(u.username); }
-    else { showAuth(); }
+    else { enterGuest(true); }
   }catch(e){
-    showAuth();
-    authError(t("cannot_reach"));
+    enterGuest(true); // server unreachable — still let them use the app as a guest
   }
 })();
 </script>
