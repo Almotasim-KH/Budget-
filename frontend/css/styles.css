@@ -39,7 +39,7 @@ a{color:var(--accent)}
 .brand-logo{width:34px;height:34px;border-radius:8px;object-fit:contain;display:block;flex-shrink:0}
 .brand-name{font-weight:700;font-size:14px;line-height:1.1}
 .brand-sub{font-size:10px;color:var(--text-faint);letter-spacing:.04em;text-transform:uppercase}
-.nav{padding:8px 8px;display:flex;flex-direction:column;gap:2px;flex:1}
+.nav{padding:10px 8px;display:flex;flex-direction:column;gap:5px;flex:1}
 .nav-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;
   color:var(--text-dim);font-weight:500;font-size:13.5px;width:100%;text-align:left;transition:.12s}
 .nav-btn:hover{background:var(--surface-2);color:var(--text)}
@@ -263,10 +263,10 @@ img,svg,canvas{max-width:100%}
     box-shadow:0 -4px 18px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.4,0,.2,1)}
   .sidebar.nav-hidden{transform:translateY(115%)}
   .brand,.sidebar-foot{display:none}
-  .nav{flex-direction:row;padding:6px;gap:2px;justify-content:space-around}
-  .nav-btn{flex-direction:column;gap:3px;padding:7px 2px;font-size:10.5px;border-radius:8px;justify-content:center;text-align:center}
+  .nav{flex-direction:row;padding:6px 8px;gap:6px;justify-content:space-evenly;align-items:stretch}
+  .nav-btn{flex:1 1 0;min-width:0;flex-direction:column;gap:3px;padding:7px 2px;font-size:10.5px;border-radius:8px;justify-content:center;align-items:center;text-align:center}
   .nav-btn span.lbl{font-size:10px}
-  .nav-badge{position:absolute;top:2px;right:18px;margin:0}
+  .nav-badge{position:absolute;top:3px;left:50%;margin:0 0 0 4px;transform:scale(.85);transform-origin:left center}
   .nav-btn{position:relative}
   main{padding:16px 13px 96px}
   .topbar{padding:12px 14px;gap:10px}
@@ -317,7 +317,7 @@ img,svg,canvas{max-width:100%}
 [dir="rtl"] .tx-note{text-align:right}
 [dir="rtl"] select.input{background-position:left 12px center;padding-right:12px;padding-left:34px}
 @media(max-width:760px){
-  [dir="rtl"] .nav-badge{right:auto;left:18px}
+  [dir="rtl"] .nav-badge{left:auto;right:50%;margin:0 4px 0 0;transform-origin:right center}
 }
 @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
 
