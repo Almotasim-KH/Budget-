@@ -31,7 +31,13 @@ function applyStaticLang(){
   document.querySelectorAll(".brand-name").forEach(e=>e.textContent=t("brand_name"));
   document.querySelectorAll(".brand-sub").forEach(e=>e.textContent=t("brand_sub"));
   const lt=document.getElementById("lang-btn-top"); if(lt) lt.textContent=langBtnLabel();
-  const lo=document.getElementById("logout-btn"); if(lo) lo.textContent = currentUser ? t("log_out") : t("sign_in");
+  const lo=document.getElementById("logout-btn");
+  if(lo){
+    lo.textContent = currentUser ? t("log_out") : t("sign_in");
+    // Guest: make "Sign in" a prominent accent button. Signed in: keep "Log out" subtle.
+    lo.classList.toggle("btn-primary", !currentUser);
+    lo.classList.toggle("btn-ghost", !!currentUser);
+  }
   const gl=document.getElementById("auth-guest-link"); if(gl) gl.textContent=t("continue_guest");
   const rb=document.getElementById("reset-month-btn"); if(rb) rb.textContent=t("reset_month");
   const cm=document.getElementById("contact-label"); if(cm) cm.textContent=t("contact_me");
