@@ -32,7 +32,6 @@ function applyStaticLang(){
   document.querySelectorAll(".brand-sub").forEach(e=>e.textContent=t("brand_sub"));
   const lt=document.getElementById("lang-btn-top"); if(lt) lt.textContent=langBtnLabel();
   const lo=document.getElementById("logout-btn"); if(lo) lo.textContent = currentUser ? t("log_out") : t("sign_in");
-  const who=document.getElementById("who"); if(who) who.innerHTML = currentUser ? t("signed_in_as")+' <b>'+esc(currentUser)+'</b>' : t("guest");
   const gl=document.getElementById("auth-guest-link"); if(gl) gl.textContent=t("continue_guest");
   const rb=document.getElementById("reset-month-btn"); if(rb) rb.textContent=t("reset_month");
   const cm=document.getElementById("contact-label"); if(cm) cm.textContent=t("contact_me");
@@ -489,6 +488,7 @@ function viewDashboard(){
   const net=inc-exp;
   const hh=new Date().getHours();
   const greet=t(hh<12?"good_morning":(hh<18?"good_afternoon":"good_evening"));
+  const greetName=currentUser?esc(currentUser):t('guest');
   const todayLong=new Date().toLocaleDateString(dateLocale(),{weekday:"long",day:"numeric",month:"long"});
   const upA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
   const dnA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
@@ -503,7 +503,7 @@ function viewDashboard(){
       </div>
       <div class="hero-content between wrap" style="gap:16px">
         <div>
-          <div class="hero-greet">${greet} · ${todayLong}</div>
+          <div class="hero-greet">${greet}, ${greetName} · ${todayLong}</div>
           <div class="hero-title">${t('heres_your_money',{m:monthLabel(mk)})}</div>
           <div class="hero-net ${net>=0?'txt-g':'txt-r'}" data-count="${net}" data-kind="money">${fmt(net)}</div>
           <div class="hero-net-label ${net>=0?'txt-g':'txt-r'}">${net>=0?upA:dnA} ${t('net')}</div>
