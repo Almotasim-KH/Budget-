@@ -21,9 +21,14 @@ function buildApp() {
 
   app.use(express.json({ limit: "5mb" }));
 
+  // In production the session lives in MySQL. Locally (dev) we fall back to the
+  // default in-memory store so the app runs without a database — guest mode is
+  // entirely client-side, so no MySQL is needed just to preview the frontend.
   app.use(
     session({
-      store: new MySQLStore({ createDatabaseTable: true }, sessionPool),
+      store: isProd
+        ? new MySQLStore({ createDatabaseTable: true }, sessionPool)
+        : undefined,
       secret: process.env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
