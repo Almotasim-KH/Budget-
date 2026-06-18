@@ -10,7 +10,9 @@ transactions, budgets, bills, and goals.
 
 ## Stack
 
-- **Frontend:** single `index.html` (vanilla JS, no build step)
+- **Frontend:** static files in `frontend/` (vanilla JS, no build step) —
+  `index.html` shell, `css/styles.css`, `js/app.js`, and per-language
+  dictionaries in `lang/`
 - **Backend:** Node.js + Express
 - **Auth:** bcrypt-hashed passwords, server-side sessions (stored in MySQL via
   `express-mysql-session`)
@@ -69,8 +71,13 @@ failure cases (401 unauthenticated, 409 duplicate username, weak password).
 ## Project layout
 
 ```
-index.html          the app (guest mode + login overlay + finance UI)
-server/
+frontend/
+  index.html        the app shell (guest mode + login overlay + finance UI)
+  css/styles.css    all styles
+  js/app.js         all app logic
+  lang/en.js        English strings (window.LANG_EN)
+  lang/ar.js        Arabic strings (window.LANG_AR)
+backend/
   index.js          startup: listen, then init schema
   app.js            Express app factory (routes, sessions, static)
   db.js             mysql2 pool + table bootstrap

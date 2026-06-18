@@ -3,6 +3,8 @@ node_modules/
 *.log
 .claude/
 .mcp.json
-budget-deploy.tgz
 .gstack/
 .superpowers/
+
+# Local-only clutter: build archives, screenshots, scratch files
+ignore/

@@ -44,8 +44,8 @@ function jar() {
 }
 
 before(async () => {
-  const { initSchema } = require("../server/db");
-  const { buildApp } = require("../server/app");
+  const { initSchema } = require("../backend/db");
+  const { buildApp } = require("../backend/app");
   await initSchema();
   const app = buildApp();
   await new Promise((resolve) => {
@@ -58,7 +58,7 @@ before(async () => {
 
 after(async () => {
   if (server) await new Promise((r) => server.close(r));
-  const { pool } = require("../server/db");
+  const { pool } = require("../backend/db");
   // Clean up the throwaway users (cascade removes their budgets).
   await pool.query("DELETE FROM users WHERE username IN (?)", [[userA, userB]]);
   await pool.end();

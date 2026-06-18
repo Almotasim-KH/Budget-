@@ -39,9 +39,9 @@ function buildApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/data", dataRouter);
 
-  // Serve ONLY index.html (not the whole folder) so .env/server/docs stay private.
-  const INDEX_HTML = path.join(__dirname, "..", "index.html");
-  app.get("/", (req, res) => res.sendFile(INDEX_HTML));
+  // Serve the frontend folder (index.html, css/, js/, lang/). backend/, .env and
+  // test/ live outside it, so they stay private.
+  app.use(express.static(path.join(__dirname, "..", "frontend")));
 
   return app;
 }

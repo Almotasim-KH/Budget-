@@ -1,12 +1,12 @@
 {
   "name": "budget-app",
   "version": "1.0.0",
-  "description": "Finance Command Center with login and PostgreSQL per-user storage",
+  "description": "Finance Command Center with login and MySQL per-user storage",
   "type": "commonjs",
-  "main": "server/index.js",
+  "main": "backend/index.js",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node server/index.js",
+    "start": "node backend/index.js",
+    "dev": "node backend/index.js",
     "test": "node --test --test-force-exit"
   },
   "dependencies": {
