@@ -67,5 +67,8 @@ window.LANG_EN = {
     t_bill_paid_logged:"Bill paid — logged as expense", t_paid_rolled:"Paid — rolled to {d}",
     c_del_tx:"Delete this transaction?", c_del_bill:"Delete this bill?", c_del_goal:"Delete this goal and its contributions?",
     c_cat_used:"“{name}” is used by {n} item(s). They will be moved to “Uncategorized”. Continue?",
-    c_del_cat:"Delete category “{name}”?", bill_prefix:"Bill: "
+    c_del_cat:"Delete category “{name}”?", bill_prefix:"Bill: ",
+    reset_month:"Reset this month", contact_me:"Contact me:",
+    c_reset_month:"Delete ALL data for {month}? Transactions, goal contributions, and bill payments this month will be permanently removed. This can’t be undone.",
+    t_month_reset:"{month} data reset"
 };

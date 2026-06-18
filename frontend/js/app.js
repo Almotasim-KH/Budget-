@@ -34,6 +34,8 @@ function applyStaticLang(){
   const lo=document.getElementById("logout-btn"); if(lo) lo.textContent = currentUser ? t("log_out") : t("sign_in");
   const who=document.getElementById("who"); if(who) who.innerHTML = currentUser ? t("signed_in_as")+' <b>'+esc(currentUser)+'</b>' : t("guest");
   const gl=document.getElementById("auth-guest-link"); if(gl) gl.textContent=t("continue_guest");
+  const rb=document.getElementById("reset-month-btn"); if(rb) rb.textContent=t("reset_month");
+  const cm=document.getElementById("contact-label"); if(cm) cm.textContent=t("contact_me");
   renderThemeIcons();
   applyAuthLang();
 }
@@ -148,6 +150,25 @@ window.addEventListener("beforeunload",()=>{
   }
 });
 function commit(){ save(); render(); }
+
+/* Wipe the current calendar month's entered data: transactions, goal
+   contributions, and bill payment history dated in that month. Budgets,
+   categories, and the bills/goals themselves are left untouched. */
+function resetCurrentMonth(){
+  const mk = monthKey(todayISO());
+  if(!confirm(t("c_reset_month", {month: monthLabel(mk)}))) return;
+  state.transactions = state.transactions.filter(x => monthKey(x.date) !== mk);
+  state.goals.forEach(g => {
+    if(Array.isArray(g.contributions))
+      g.contributions = g.contributions.filter(c => monthKey(c.date) !== mk);
+  });
+  state.bills.forEach(b => {
+    if(Array.isArray(b.history))
+      b.history = b.history.filter(h => monthKey(h.paidOn) !== mk);
+  });
+  commit();
+  toast(t("t_month_reset", {month: monthLabel(mk)}));
+}
 
 /* ---------- UTIL ---------- */
 function uid(p){ return (p||"id")+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
@@ -1049,6 +1070,7 @@ document.addEventListener("click",e=>{
   if(a==="nav"){ ui.view=el.dataset.view; render(); window.scrollTo(0,0); document.querySelectorAll(".sidebar,.topbar").forEach(b=>b.classList.remove("nav-hidden")); return; }
   if(a==="theme"){ state.settings.theme=state.settings.theme==="dark"?"light":"dark"; commit(); return; }
   if(a==="lang"){ setLang(curLang()==="ar"?"en":"ar"); return; }
+  if(a==="reset-month"){ resetCurrentMonth(); return; }
   if(a==="auth-mode"){ setAuthMode(el.dataset.mode); return; }
 
   // quick add
